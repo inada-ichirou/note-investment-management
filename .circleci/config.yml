@@ -1,0 +1,170 @@
+# version: 2.1
+
+# # コマンドーーーーーーーーーーーーーーーーーーーーーーーーーーー
+# commands:
+#   setup-node-and-puppeteer:
+#     steps:
+#       - checkout
+#       - run:
+#           name: npm install
+#           command: npm install
+#       - run:
+#           name: Install Puppeteer dependencies
+#           command: |
+#             sudo apt-get update
+#             sudo apt-get install -y \
+#               wget \
+#               ca-certificates \
+#               fonts-liberation \
+#               libappindicator3-1 \
+#               libasound2 \
+#               libatk-bridge2.0-0 \
+#               libatk1.0-0 \
+#               libcups2 \
+#               libdbus-1-3 \
+#               libdrm2 \
+#               libgbm1 \
+#               libnspr4 \
+#               libnss3 \
+#               libx11-xcb1 \
+#               libxcomposite1 \
+#               libxdamage1 \
+#               libxrandr2 \
+#               xdg-utils \
+#               --no-install-recommends
+# # コマンドーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
+# # ジョブーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+# jobs:
+#   run-js-script:
+#     parameters:
+#       script-file:
+#         type: string
+#     docker:
+#       - image: cimg/node:20.11
+#     steps:
+#       - setup-node-and-puppeteer
+#       - run:
+#           name: Run << parameters.script-file >>
+#           command: node << parameters.script-file >>
+
+
+# # ジョブーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
+# # ワークフローーーーーーーーーーーーーーーーーーーーーーーーーー
+# workflows:
+#   version: 2
+
+#   # 記事公開用のワークフロー（1日5回）
+#   scheduled-auto-publish-notes:
+#     triggers:
+#       - schedule:
+#           cron: "45 2,8,14 * * *"   # JST 11:45, 17:45, 23:45
+#           filters:
+#             branches:
+#               only:
+#                 - main
+#       - schedule:
+#           cron: "0 22 * * *"   # JST 7:00
+#           filters:
+#             branches:
+#               only:
+#                 - main
+
+#       - schedule:
+#           cron: "0 6 * * *"    # JST 15:00
+#           filters:
+#             branches:
+#               only:
+#                 - main
+#     jobs:
+#       - run-js-script:
+#           name: auto-publish-notes
+#           script-file: autoPublishNotes.js
+
+#   # 記事作成用のワークフロー（1日5回）
+#   scheduled-auto-create-note:
+#     triggers:
+#       - schedule:
+#           cron: "0 22 * * *"   # JST 7:00
+#           filters:
+#             branches:
+#               only:
+#                 - main
+#       - schedule:
+#           cron: "45 2,8,14 * * *"   # JST 11:45, 17:45, 23:45
+#           filters:
+#             branches:
+#               only:
+#                 - main
+#       - schedule:
+#           cron: "0 6 * * *"    # JST 15:00
+#           filters:
+#             branches:
+#               only:
+#                 - main
+#     jobs:
+#       - run-js-script:
+#           name: auto-create-and-draft-note
+#           script-file: autoCreateAndDraftNote.js
+
+#   # フォロー用のワークフロー（1日8回、3時間ごと）
+#   scheduled-follow-from-articles:
+#     triggers:
+#       - schedule:
+#           cron: "0 0,3,6,9,12,15,18,21 * * *"   # 3時間ごと
+#           filters:
+#             branches:
+#               only:
+#                 - main
+#     jobs:
+#       - run-js-script:
+#           name: follow-from-articles
+#           script-file: follow/followFromArticles.js
+
+#   # いいね用のワークフロー（1日8回、3時間ごと、フォローとずらす）
+#   scheduled-like-notes:
+#     triggers:
+#       - schedule:
+#           cron: "30 0,3,6,9,12,15,18,21 * * *"   # 3時間ごと（30分ずらし）
+#           filters:
+#             branches:
+#               only:
+#                 - main
+#     jobs:
+#       - run-js-script:
+#           name: like-notes
+#           script-file: likeUnlikedNotes.js
+
+#   # Push時の実行用
+#   on-push:
+#     jobs:
+#       - run-js-script:
+#           name: auto-publish-notes
+#           script-file: autoPublishNotes.js
+#           filters:
+#             branches:
+#               only:
+#                 - main
+#       - run-js-script:
+#           name: auto-create-and-draft-note
+#           script-file: autoCreateAndDraftNote.js
+#           filters:
+#             branches:
+#               only:
+#                 - main
+#       - run-js-script:
+#           name: follow-from-articles
+#           script-file: follow/followFromArticles.js
+#           filters:
+#             branches:
+#               only:
+#                 - main
+#       - run-js-script:
+#           name: like-notes
+#           script-file: likeUnlikedNotes.js
+#           filters:
+#             branches:
+#               only:
+#                 - main
+# # ワークフローーーーーーーーーーーーーーーーーーーーーーーーーー
