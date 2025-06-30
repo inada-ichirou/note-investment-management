@@ -15,7 +15,7 @@ variables:
 # 定期実行用ジョブ
 auto-create-and-draft-note:
   stage: create-and-draft
-  image: node:${NODE_VERSION}-bullseye
+  image: buildkite/puppeteer:latest
   
   # キャッシュ設定（npm installを高速化）
   cache:
@@ -32,14 +32,7 @@ auto-create-and-draft-note:
     - echo "Node.jsバージョン確認"
     - node --version
     - npm --version
-    - echo "Puppeteer用システム依存関係をインストール中..."
-    - apt-get update
-    - apt-get install -y wget gnupg ca-certificates
-    - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-    - sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
-    - apt-get update
-    - apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1
-    - rm -rf /var/lib/apt/lists/*
+    - echo "Puppeteer環境準備済み（buildkite/puppeteer:latest）"
     
   script:
     # 1. 依存パッケージのインストール
@@ -51,8 +44,7 @@ auto-create-and-draft-note:
     - export OPENROUTER_API_KEY="${OPENROUTER_API_KEY}"
     - export NOTE_EMAIL="${NOTE_EMAIL}"
     - export NOTE_PASSWORD="${NOTE_PASSWORD}"
-    - export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-    - export PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+    - export PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox"
     
     # 3. スクリプトの実行
     - echo "autoCreateAndDraftNote.js を実行中..."
