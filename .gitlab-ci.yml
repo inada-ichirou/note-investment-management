@@ -15,7 +15,7 @@ variables:
 # 定期実行用ジョブ
 auto-create-and-draft-note:
   stage: create-and-draft
-  image: buildkite/puppeteer:latest
+  image: zenika/alpine-chrome:with-puppeteer
   
   # キャッシュ設定（npm installを高速化）
   cache:
@@ -29,10 +29,11 @@ auto-create-and-draft-note:
     - if: $CI_PIPELINE_SOURCE == "api"
   
   before_script:
-    - echo "Node.jsバージョン確認"
+    - echo "Alpine Chrome + Puppeteer環境準備済み"
     - node --version
     - npm --version
-    - echo "Puppeteer環境準備済み（buildkite/puppeteer:latest）"
+    - echo "Chrome実行確認"
+    - which google-chrome-stable || which chromium-browser || echo "Chrome not found in PATH"
     
   script:
     # 1. 依存パッケージのインストール
@@ -44,7 +45,9 @@ auto-create-and-draft-note:
     - export OPENROUTER_API_KEY="${OPENROUTER_API_KEY}"
     - export NOTE_EMAIL="${NOTE_EMAIL}"
     - export NOTE_PASSWORD="${NOTE_PASSWORD}"
-    - export PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox"
+    - export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+    - export CHROME_BIN=/usr/bin/chromium-browser
+    - export PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
     
     # 3. スクリプトの実行
     - echo "autoCreateAndDraftNote.js を実行中..."
