@@ -1,0 +1,42 @@
+# このワークフローは push, 手動実行, そしてcronスケジュールで autoCreateAndDraftNote.js を自動実行します
+# cronスケジュールは auto-publish-notes.yml と同じ（JST 11:45, 17:45, 23:45）
+
+name: Auto Create And Draft Note
+
+on:
+  # schedule:
+  #   # JST 11:45, 17:45, 23:45（UTC換算で2:45, 8:45, 14:45）
+  #   - cron: '45 2 * * *' # JST 11:45
+  #   - cron: '45 8 * * *'   # JST 17:45
+  #   - cron: '45 14 * * *'  # JST 23:45
+  workflow_dispatch:  # 手動実行
+
+jobs:
+  run-auto-create-and-draft-note:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. リポジトリのコードをチェックアウト
+      - name: コードをチェックアウト
+        uses: actions/checkout@v4
+
+      # 2. Node.jsのセットアップ（バージョンは必要に応じて変更）
+      - name: Node.jsをセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      # 3. 依存パッケージのインストール
+      - name: 依存パッケージをインストール
+        run: npm ci
+
+      # 4. 必要な環境変数を設定（OpenRouter APIキーなど）
+      #    GitHubリポジトリのSettings > Secrets and variables > Actions で設定してください
+      - name: 環境変数を設定
+        run: |
+          echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> $GITHUB_ENV
+          echo "NOTE_EMAIL=${{ secrets.NOTE_EMAIL }}" >> $GITHUB_ENV
+          echo "NOTE_PASSWORD=${{ secrets.NOTE_PASSWORD }}" >> $GITHUB_ENV
+
+      # 5. スクリプトを実行
+      - name: autoCreateAndDraftNote.js を実行
+        run: node autoCreateAndDraftNote.js 
