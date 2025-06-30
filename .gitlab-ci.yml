@@ -6,6 +6,8 @@
 
 stages:
   - create-and-draft
+  - publish-notes
+  - other-tasks
 
 variables:
   NODE_VERSION: "20"
@@ -20,9 +22,9 @@ auto-create-and-draft-note:
     paths:
       - node_modules/
   
-  # 実行条件：スケジュール実行または手動実行のみ
+  # 実行条件：スケジュール実行（CREATE_DRAFT）または手動実行のみ
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "CREATE_DRAFT"
     - if: $CI_PIPELINE_SOURCE == "web"
     - if: $CI_PIPELINE_SOURCE == "api"
   
@@ -65,6 +67,70 @@ auto-create-and-draft-note:
     
   # タイムアウト設定（10分）
   timeout: 10m
+
+# 記事自動公開ジョブ（15時実行用）
+auto-publish-notes:
+  stage: publish-notes
+  image: node:${NODE_VERSION}-bullseye
+  
+  cache:
+    paths:
+      - node_modules/
+  
+  # 実行条件：スケジュール実行（PUBLISH_NOTES）のみ
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "PUBLISH_NOTES"
+  
+  before_script:
+    - echo "Node.jsバージョン確認"
+    - node --version
+    - npm --version
+    - echo "Puppeteer用システム依存関係をインストール中..."
+    - apt-get update
+    - apt-get install -y wget gnupg ca-certificates
+    - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+    - sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+    - apt-get update
+    - apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1
+    - rm -rf /var/lib/apt/lists/*
+    
+  script:
+    - npm ci
+    - export OPENROUTER_API_KEY="${OPENROUTER_API_KEY}"
+    - export NOTE_EMAIL="${NOTE_EMAIL}"
+    - export NOTE_PASSWORD="${NOTE_PASSWORD}"
+    - export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+    - export PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+    - echo "記事自動公開スクリプトを実行中..."
+    - node autoPublishNotes.js
+    
+  artifacts:
+    when: on_failure
+    paths:
+      - "*.log"
+    expire_in: 1 week
+    
+  timeout: 10m
+
+# その他のタスク用ジョブ
+other-task:
+  stage: other-tasks
+  image: node:${NODE_VERSION}-bullseye
+  
+  cache:
+    paths:
+      - node_modules/
+  
+  # 実行条件：スケジュール実行（OTHER_TASK）のみ
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "OTHER_TASK"
+  
+  script:
+    - npm ci
+    - echo "その他のタスクを実行中..."
+    # ここに他のスクリプトを追加
+    
+  timeout: 5m
 
 # 手動実行専用ジョブ（必要に応じて）
 manual-create-and-draft-note:
