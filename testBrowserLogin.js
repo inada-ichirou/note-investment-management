@@ -1,32 +1,5 @@
 const puppeteer = require('puppeteer');
-
-// ログイン処理のテスト
-async function testLogin(page, email, password) {
-  console.log('note.comにアクセス中...');
-  await page.goto('https://note.com/login', { waitUntil: 'networkidle2' });
-  
-  console.log('ログインフォームに入力中...');
-  await page.waitForSelector('input[name="login_name"]', { timeout: 10000 });
-  await page.type('input[name="login_name"]', email);
-  await page.type('input[name="password"]', password);
-  
-  console.log('ログインボタンをクリック...');
-  await page.click('button[type="submit"]');
-  
-  console.log('ログイン処理完了を待機中...');
-  await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 });
-  
-  const currentUrl = page.url();
-  console.log('ログイン後のURL:', currentUrl);
-  
-  if (currentUrl.includes('note.com') && !currentUrl.includes('login')) {
-    console.log('✅ ログイン成功！');
-    return true;
-  } else {
-    console.log('❌ ログイン失敗');
-    return false;
-  }
-}
+const { login } = require('./noteAutoDraftAndSheetUpdate');
 
 // メイン処理
 (async () => {
@@ -70,13 +43,14 @@ async function testLogin(page, email, password) {
     // User-Agentを設定
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
     
-    // ログインテスト実行
-    const loginSuccess = await testLogin(page, email, password);
+    // 既存のlogin関数を使用してログインテスト実行
+    console.log('Puppeteerブラウザテストを開始します...');
+    const loginSuccess = await login(page, email, password);
     
     if (loginSuccess) {
-      console.log('🎉 すべてのテストが成功しました！');
+      console.log('🎉 ブラウザテスト完了: ログイン機能は正常に動作しています');
     } else {
-      console.log('❌ ログインテストが失敗しました');
+      console.log('⚠️ ブラウザテスト警告: ログイン機能に問題がある可能性があります');
       process.exit(1);
     }
     
