@@ -34,9 +34,7 @@ auto-create-and-draft-note:
     - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
     - sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
     - apt-get update
-    - apt-get install -y google-chrome-stable \
-        libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 \
-        fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
+    - apt-get install -y google-chrome-stable libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
     - rm -rf /var/lib/apt/lists/*
     
   script:
@@ -85,9 +83,7 @@ auto-publish-notes:
     - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
     - sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
     - apt-get update
-    - apt-get install -y google-chrome-stable \
-        libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 \
-        fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
+    - apt-get install -y google-chrome-stable libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
     - rm -rf /var/lib/apt/lists/*
     
   script:
@@ -149,9 +145,7 @@ test-browser-login:
     - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
     - sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
     - apt-get update
-    - apt-get install -y google-chrome-stable \
-        libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 \
-        fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
+    - apt-get install -y google-chrome-stable libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
     - rm -rf /var/lib/apt/lists/*
   
   script:
@@ -192,9 +186,7 @@ manual-create-and-draft-note:
     - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
     - sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
     - apt-get update
-    - apt-get install -y google-chrome-stable \
-        libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 \
-        fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
+    - apt-get install -y google-chrome-stable libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
     - rm -rf /var/lib/apt/lists/*
   
   script:
@@ -204,4 +196,4 @@ manual-create-and-draft-note:
     - export NOTE_PASSWORD="${NOTE_PASSWORD}"
     - export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
     - export PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
-    - node autoCreateAndDraftNote.js 
+    - node autoCreateAndDraftNote.js
