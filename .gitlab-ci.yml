@@ -80,16 +80,14 @@ auto-publish-notes:
     - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "PUBLISH_NOTES"
   
   before_script:
-    - echo "Node.jsバージョン確認"
-    - node --version
-    - npm --version
-    - echo "Puppeteer用システム依存関係をインストール中..."
     - apt-get update
     - apt-get install -y wget gnupg ca-certificates
     - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
     - sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
     - apt-get update
-    - apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1
+    - apt-get install -y google-chrome-stable \
+        libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 \
+        fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
     - rm -rf /var/lib/apt/lists/*
     
   script:
@@ -151,7 +149,9 @@ manual-create-and-draft-note:
     - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
     - sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
     - apt-get update
-    - apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1
+    - apt-get install -y google-chrome-stable \
+        libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 \
+        fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
     - rm -rf /var/lib/apt/lists/*
   
   script:
