@@ -128,6 +128,49 @@ other-task:
     
   timeout: 5m
 
+# ブラウザテスト専用ジョブ（手動実行）
+test-browser-login:
+  stage: create-and-draft
+  image: node:${NODE_VERSION}-bullseye
+  
+  cache:
+    paths:
+      - node_modules/
+  
+  # 手動実行のみ
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+  
+  before_script:
+    - apt-get update
+    - apt-get install -y wget gnupg ca-certificates
+    - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+    - sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+    - apt-get update
+    - apt-get install -y google-chrome-stable \
+        libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 \
+        fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
+    - rm -rf /var/lib/apt/lists/*
+  
+  script:
+    - npm ci
+    - export NOTE_EMAIL="${NOTE_EMAIL}"
+    - export NOTE_PASSWORD="${NOTE_PASSWORD}"
+    - export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+    - export PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+    - echo "=== ブラウザ起動・ログインテスト開始 ==="
+    - node testBrowserLogin.js
+    
+  artifacts:
+    when: on_failure
+    paths:
+      - "*.log"
+    expire_in: 1 week
+    
+  timeout: 5m
+
 # 手動実行専用ジョブ（必要に応じて）
 manual-create-and-draft-note:
   stage: create-and-draft
