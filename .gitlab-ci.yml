@@ -15,7 +15,7 @@ variables:
 # 定期実行用ジョブ
 auto-create-and-draft-note:
   stage: create-and-draft
-  image: zenika/alpine-chrome:with-puppeteer
+  image: node:${NODE_VERSION}-bullseye
   
   # キャッシュ設定（npm installを高速化）
   cache:
@@ -29,11 +29,15 @@ auto-create-and-draft-note:
     - if: $CI_PIPELINE_SOURCE == "api"
   
   before_script:
-    - echo "Alpine Chrome + Puppeteer環境準備済み"
-    - node --version
-    - npm --version
-    - echo "Chrome実行確認"
-    - which google-chrome-stable || which chromium-browser || echo "Chrome not found in PATH"
+    - apt-get update
+    - apt-get install -y wget gnupg ca-certificates
+    - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+    - sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+    - apt-get update
+    - apt-get install -y google-chrome-stable \
+        libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 \
+        fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
+    - rm -rf /var/lib/apt/lists/*
     
   script:
     # 1. 依存パッケージのインストール
@@ -46,8 +50,7 @@ auto-create-and-draft-note:
     - export NOTE_EMAIL="${NOTE_EMAIL}"
     - export NOTE_PASSWORD="${NOTE_PASSWORD}"
     - export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-    - export CHROME_BIN=/usr/bin/chromium-browser
-    - export PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+    - export PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
     
     # 3. スクリプトの実行
     - echo "autoCreateAndDraftNote.js を実行中..."
