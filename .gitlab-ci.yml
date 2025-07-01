@@ -5,11 +5,26 @@
 # 45 2,8,14 * * * (JST 11:45, 17:45, 23:45に相当)
 
 stages:
+  - debug
   - create-and-draft
   - publish-notes
 
 variables:
   NODE_VERSION: "20"
+
+# デバッグ用ジョブ（スケジュール実行時の変数を確認）
+debug-schedule:
+  stage: debug
+  image: alpine:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - echo "=== スケジュール実行デバッグ情報 ==="
+    - echo "CI_PIPELINE_SOURCE: $CI_PIPELINE_SOURCE"
+    - echo "SCHEDULE_TYPE: $SCHEDULE_TYPE"
+    - echo "CI_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME"
+    - echo "CI_PIPELINE_ID: $CI_PIPELINE_ID"
+    - echo "=================================="
 
 # 定期実行用ジョブ
 auto-create-and-draft-note:
@@ -23,9 +38,9 @@ auto-create-and-draft-note:
   
   # 実行条件：スケジュール実行（CREATE_DRAFT）または手動実行のみ
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "CREATE_DRAFT"
-    - if: $CI_PIPELINE_SOURCE == "web"
-    - if: $CI_PIPELINE_SOURCE == "api"
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "CREATE_DRAFT"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "api"'
   
   before_script:
     - apt-get update
