@@ -20,10 +20,10 @@ debug-schedule:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
   script:
     - echo "=== スケジュール実行デバッグ情報 ==="
-    - echo "CI_PIPELINE_SOURCE: $CI_PIPELINE_SOURCE"
-    - echo "SCHEDULE_TYPE: $SCHEDULE_TYPE"
-    - echo "CI_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME"
-    - echo "CI_PIPELINE_ID: $CI_PIPELINE_ID"
+    - echo "CI_PIPELINE_SOURCE':' $CI_PIPELINE_SOURCE"
+    - echo "SCHEDULE_TYPE':' $SCHEDULE_TYPE"
+    - echo "CI_COMMIT_REF_NAME':' $CI_COMMIT_REF_NAME"
+    - echo "CI_PIPELINE_ID':' $CI_PIPELINE_ID"
     - echo "=================================="
 
 # 定期実行用ジョブ
