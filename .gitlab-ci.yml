@@ -74,9 +74,9 @@ auto-create-and-draft-note:
   extends: .note-job-template
   stage: create-and-draft
 
-  # 実行条件：スケジュール実行（CREATE_DRAFT）または手動実行のみ
+  # 実行条件：スケジュール実行（RUN_CREATE_DRAFT）または手動実行
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "CREATE_DRAFT"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUN_CREATE_DRAFT == "true"'
     - if: '$CI_PIPELINE_SOURCE == "web"'
     - if: '$CI_PIPELINE_SOURCE == "api"'
 
@@ -89,9 +89,9 @@ auto-publish-notes:
   extends: .note-job-template
   stage: publish-notes
 
-  # 実行条件：スケジュール実行（PUBLISH_NOTES）のみ
+  # 実行条件：スケジュール実行（RUN_PUBLISH_NOTES）のみ
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "PUBLISH_NOTES"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUN_PUBLISH_NOTES == "true"'
 
   script:
     - echo "autoPublishNotes.js を実行中..."
@@ -102,14 +102,14 @@ auto-publish-notes:
 like-notes:
   extends: .note-job-template
   stage: publish-notes
-  
-  # 実行条件：スケジュール実行（LIKE_NOTES）または手動実行
+
+  # 実行条件：スケジュール実行（RUN_LIKE_NOTES）または手動実行
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "LIKE_NOTES"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUN_LIKE_NOTES == "true"'
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: manual
       allow_failure: true
-  
+
   script:
     - echo "likeUnlikedNotes.js を実行中..."
     - node likeUnlikedNotes.js
@@ -118,14 +118,14 @@ like-notes:
 follow-from-articles:
   extends: .note-job-template
   stage: publish-notes
-  
-  # 実行条件：スケジュール実行（FOLLOW_FROM_ARTICLES）または手動実行
+
+  # 実行条件：スケジュール実行（RUN_FOLLOW_FROM_ARTICLES）または手動実行
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "FOLLOW_FROM_ARTICLES"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUN_FOLLOW_FROM_ARTICLES == "true"'
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: manual
       allow_failure: true
-  
+
   script:
     - echo "follow/followFromArticles.js を実行中..."
     - node follow/followFromArticles.js
