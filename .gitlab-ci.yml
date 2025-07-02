@@ -114,6 +114,22 @@ like-notes:
     - echo "likeUnlikedNotes.js を実行中..."
     - node likeUnlikedNotes.js
 
+# 記事からフォロー機能ジョブ
+follow-from-articles:
+  extends: .note-job-template
+  stage: publish-notes
+  
+  # 実行条件：スケジュール実行（FOLLOW_FROM_ARTICLES）または手動実行
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "FOLLOW_FROM_ARTICLES"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+      allow_failure: true
+  
+  script:
+    - echo "follow/followFromArticles.js を実行中..."
+    - node follow/followFromArticles.js
+
 # ーー定期実行ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
 
