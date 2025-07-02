@@ -332,19 +332,7 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   // タグの直前に案内文を追加（日本語コメント付き）
   const infoText = [
     '最後までお読みいただきありがとうございます！💬',
-    '質問やご相談はLINE公式アカウント、もしくはジモティーからお気軽にどうぞ！',
-    '',
-    '👉 ジモティーはこちら（「投稿者にメールで問い合わせ」からDMお願いします！）',
-    '',
-    'https://jmty.jp/tokyo/coop-wles/article-1clrht',
-    '',
-    '👉 LINE公式アカウントはこちら',
-    '',
-    'https://lin.ee/do41ouw',
-    '',
-    '',
-    'https://lin.ee/do41ouw',
-    ''
+    '継続して、お得な情報を発信していきますので、フォローお願いします！',
   ].join('\n');
   newRaw = newRaw.trim() + '\n\n' + infoText + '\n\n' + tags + '\n';
   return newRaw;
