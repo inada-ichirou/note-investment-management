@@ -78,7 +78,7 @@ auto-create-and-draft-note:
   # タイムアウト設定（10分）
   timeout: 10m
 
-# 記事自動公開ジョブ（15時実行用）
+# 記事自動公開ジョブ
 auto-publish-notes:
   stage: publish-notes
   image: node:${NODE_VERSION}-bullseye
