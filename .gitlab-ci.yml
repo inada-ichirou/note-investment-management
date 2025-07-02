@@ -78,7 +78,6 @@ auto-create-and-draft-note:
     - if: '$CI_PIPELINE_SOURCE == "api"'
   
   script:
-    # スクリプトの実行
     - echo "autoCreateAndDraftNote.js を実行中..."
     - node autoCreateAndDraftNote.js
 
@@ -92,7 +91,6 @@ auto-publish-notes:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "PUBLISH_NOTES"'
 
   script:
-    # スクリプトの実行
     - echo "autoPublishNotes.js を実行中..."
     - node autoPublishNotes.js
 
@@ -109,6 +107,5 @@ manual-create-and-draft-note:
       allow_failure: true
 
   script:
-    # スクリプトの実行
     - echo "手動実行: autoCreateAndDraftNote.js を実行中..."
     - node autoCreateAndDraftNote.js
