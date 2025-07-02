@@ -15,12 +15,12 @@ variables:
 # 共通テンプレート（Puppeteerを使用するジョブ用）
 .note-job-template:
   image: node:${NODE_VERSION}-bullseye
-  
+
   # キャッシュ設定（npm installを高速化）
   cache:
     paths:
       - node_modules/
-  
+
   before_script:
     - apt-get update
     - apt-get install -y wget gnupg ca-certificates
@@ -29,11 +29,11 @@ variables:
     - apt-get update
     - apt-get install -y google-chrome-stable libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf
     - rm -rf /var/lib/apt/lists/*
-    
+
     # 依存パッケージのインストール
     - echo "依存パッケージをインストール中..."
     - npm ci
-    
+
     # 環境変数の設定（GitLabのCI/CD変数から取得）
     - echo "環境変数を設定中..."
     - export OPENROUTER_API_KEY="${OPENROUTER_API_KEY}"
@@ -41,14 +41,14 @@ variables:
     - export NOTE_PASSWORD="${NOTE_PASSWORD}"
     - export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
     - export PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
-  
+
   # エラー時のアーティファクト保存（ログなど）
   artifacts:
     when: on_failure
     paths:
       - "*.log"
     expire_in: 1 week
-    
+
   # タイムアウト設定（10分）
   timeout: 10m
 
@@ -70,13 +70,13 @@ debug-schedule:
 auto-create-and-draft-note:
   extends: .note-job-template
   stage: create-and-draft
-  
+
   # 実行条件：スケジュール実行（CREATE_DRAFT）または手動実行のみ
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "CREATE_DRAFT"'
     - if: '$CI_PIPELINE_SOURCE == "web"'
     - if: '$CI_PIPELINE_SOURCE == "api"'
-  
+
   script:
     - echo "autoCreateAndDraftNote.js を実行中..."
     - node autoCreateAndDraftNote.js
