@@ -66,7 +66,10 @@ debug-schedule:
     - echo "CI_PIPELINE_ID':' $CI_PIPELINE_ID"
     - echo "=================================="
 
-# 定期実行用ジョブ
+
+# ーー定期実行ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
+# 記事作成・下書き保存ジョブ
 auto-create-and-draft-note:
   extends: .note-job-template
   stage: create-and-draft
@@ -93,6 +96,26 @@ auto-publish-notes:
   script:
     - echo "autoPublishNotes.js を実行中..."
     - node autoPublishNotes.js
+
+
+# 記事いいね機能ジョブ
+like-notes:
+  extends: .note-job-template
+  stage: publish-notes
+  
+  # 実行条件：スケジュール実行（LIKE_NOTES）または手動実行
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "LIKE_NOTES"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+      allow_failure: true
+  
+  script:
+    - echo "likeUnlikedNotes.js を実行中..."
+    - node likeUnlikedNotes.js
+
+# ーー定期実行ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
 
 # 手動実行専用ジョブ（必要に応じて）
 manual-create-and-draft-note:
