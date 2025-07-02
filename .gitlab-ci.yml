@@ -94,18 +94,14 @@ auto-publish-notes:
     - echo "autoPublishNotes.js を実行中..."
     - node autoPublishNotes.js
 
-
 # 手動実行専用ジョブ（必要に応じて）
 manual-create-and-draft-note:
   extends: .note-job-template
   stage: create-and-draft
-
-  # 手動実行のみ
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: manual
       allow_failure: true
-
   script:
-    - echo "手動実行: autoCreateAndDraftNote.js を実行中..."
+    - echo "手動実行中..."
     - node autoCreateAndDraftNote.js
