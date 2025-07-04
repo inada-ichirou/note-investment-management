@@ -8,6 +8,8 @@ stages:
   - debug
   - create-and-draft
   - publish-notes
+  - like-notes
+  - follow-from-articles
 
 variables:
   NODE_VERSION: "20"
@@ -53,18 +55,18 @@ variables:
   timeout: 10m
 
 # デバッグ用ジョブ（スケジュール実行時の変数を確認）
-debug-schedule:
-  stage: debug
-  image: alpine:latest
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-  script:
-    - echo "=== スケジュール実行デバッグ情報 ==="
-    - echo "CI_PIPELINE_SOURCE':' $CI_PIPELINE_SOURCE"
-    - echo "SCHEDULE_TYPE':' $SCHEDULE_TYPE"
-    - echo "CI_COMMIT_REF_NAME':' $CI_COMMIT_REF_NAME"
-    - echo "CI_PIPELINE_ID':' $CI_PIPELINE_ID"
-    - echo "=================================="
+# debug-schedule:
+#   stage: debug
+#   image: alpine:latest
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "schedule"'
+#   script:
+#     - echo "=== スケジュール実行デバッグ情報 ==="
+#     - echo "CI_PIPELINE_SOURCE':' $CI_PIPELINE_SOURCE"
+#     - echo "SCHEDULE_TYPE':' $SCHEDULE_TYPE"
+#     - echo "CI_COMMIT_REF_NAME':' $CI_COMMIT_REF_NAME"
+#     - echo "CI_PIPELINE_ID':' $CI_PIPELINE_ID"
+#     - echo "=================================="
 
 
 # ーー定期実行ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -101,7 +103,7 @@ auto-publish-notes:
 # 記事いいね機能ジョブ
 like-notes:
   extends: .note-job-template
-  stage: publish-notes
+  stage: like-notes
 
   # 実行条件：スケジュール実行（RUN_LIKE_NOTES）または手動実行
   rules:
@@ -117,7 +119,7 @@ like-notes:
 # 記事からフォロー機能ジョブ
 follow-from-articles:
   extends: .note-job-template
-  stage: publish-notes
+  stage: follow-from-articles
 
   # 実行条件：スケジュール実行（RUN_FOLLOW_FROM_ARTICLES）または手動実行
   rules:
