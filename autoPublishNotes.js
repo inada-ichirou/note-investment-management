@@ -69,9 +69,30 @@ const { TwitterApi } = require('twitter-api-v2');
   console.log('遷移後のURL:', afterUrl);
   console.log('遷移後のページタイトル:', afterTitle);
   
-  // ページ遷移後に少し待機
-  console.log('ページ読み込み完了を待機します（1.5秒）');
+  // ページ読み込み完了を待機します（1.5秒）
   await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5秒待機
+
+  // JavaScriptによる動的読み込みを待機
+  console.log('JavaScriptによる動的読み込みを待機します');
+  try {
+    // ページが完全に読み込まれるまで待機（最大10秒）
+    await page.waitForFunction(
+      () => {
+        // ページの読み込み状態を確認
+        const readyState = document.readyState;
+        const hasContent = document.body && document.body.innerHTML.length > 100000;
+        return readyState === 'complete' && hasContent;
+      },
+      { timeout: 10000 }
+    );
+    console.log('ページの動的読み込みが完了しました');
+  } catch (e) {
+    console.log('動的読み込みの待機がタイムアウトしました:', e.message);
+  }
+
+  // 追加の待機時間
+  console.log('追加で3秒待機します');
+  await new Promise(resolve => setTimeout(resolve, 3000));
 
   // ページの状態をさらに詳細に確認
   console.log('ページの詳細な状態を確認します');
@@ -84,12 +105,62 @@ const { TwitterApi } = require('twitter-api-v2');
         hasArticleList: content.includes('o-articleList'),
         hasArticleItem: content.includes('o-articleList__item'),
         bodyClasses: document.body ? document.body.className : 'body要素なし',
-        headTitle: document.title
+        headTitle: document.title,
+        // 新しい調査項目を追加
+        hasNuxtContent: content.includes('__nuxt'),
+        hasReactContent: content.includes('react'),
+        hasVueContent: content.includes('vue'),
+        hasLoadingIndicator: content.includes('loading') || content.includes('spinner'),
+        hasErrorMessage: content.includes('error') || content.includes('エラー'),
+        hasEmptyState: content.includes('empty') || content.includes('記事がありません') || content.includes('下書きがありません'),
+        // ページの主要な構造を確認
+        mainContentClasses: (() => {
+          const mainElements = document.querySelectorAll('main, [role="main"], .main, .content, .container');
+          return Array.from(mainElements).map(el => el.className).slice(0, 5);
+        })(),
+        // 全体のクラス名を調査（記事関連以外も含む）
+        allUniqueClasses: (() => {
+          const elements = document.querySelectorAll('*[class]');
+          const classes = new Set();
+          elements.forEach(el => {
+            el.className.split(' ').forEach(cls => {
+              if (cls && (cls.includes('list') || cls.includes('item') || cls.includes('note') || cls.includes('draft'))) {
+                classes.add(cls);
+              }
+            });
+          });
+          return Array.from(classes).slice(0, 30);
+        })()
       };
     });
     console.log('ページ内容の詳細:', JSON.stringify(pageContent, null, 2));
   } catch (e) {
     console.log('ページ内容の詳細確認に失敗:', e.message);
+  }
+
+  // ページのHTMLの一部を出力（デバッグ用）
+  console.log('ページのHTML構造を調査します');
+  try {
+    const htmlSample = await page.evaluate(() => {
+      const body = document.body;
+      if (!body) return 'body要素が見つかりません';
+      
+      // bodyの直接の子要素を確認
+      const children = Array.from(body.children).map(child => ({
+        tagName: child.tagName,
+        className: child.className,
+        id: child.id,
+        childrenCount: child.children.length
+      }));
+      
+      return {
+        bodyChildren: children,
+        bodyHTML: body.innerHTML.substring(0, 2000) // 最初の2000文字
+      };
+    });
+    console.log('HTML構造の詳細:', JSON.stringify(htmlSample, null, 2));
+  } catch (e) {
+    console.log('HTML構造の調査に失敗:', e.message);
   }
 
   // 下書き記事リストを取得
@@ -107,6 +178,103 @@ const { TwitterApi } = require('twitter-api-v2');
   // 記事が見つからない場合の追加調査
   if (articles.length === 0) {
     console.log('記事が見つからないため、追加調査を行います');
+    
+    // より包括的なセレクター調査
+    console.log('=== 包括的なセレクター調査を開始 ===');
+    
+    // 1. リスト系の要素を調査
+    const listSelectors = [
+      'ul', 'ol', 'div[class*="list"]', 'div[class*="List"]',
+      'section[class*="list"]', 'section[class*="List"]',
+      '[data-testid*="list"]', '[data-testid*="List"]'
+    ];
+    
+    for (const selector of listSelectors) {
+      try {
+        const elements = await page.$$(selector);
+        if (elements.length > 0) {
+          console.log(`リスト系セレクター "${selector}" で ${elements.length} 件の要素を検出`);
+          // 最初の要素の詳細情報
+          const firstElementInfo = await elements[0].evaluate(el => ({
+            tagName: el.tagName,
+            className: el.className,
+            id: el.id,
+            childrenCount: el.children.length,
+            textContent: el.textContent ? el.textContent.substring(0, 100) : ''
+          }));
+          console.log('最初の要素の詳細:', JSON.stringify(firstElementInfo, null, 2));
+        }
+      } catch (e) {
+        console.log(`セレクター "${selector}" での検索に失敗:`, e.message);
+      }
+    }
+    
+    // 2. 記事系の要素を調査（より広範囲）
+    const articleSelectors = [
+      'article', '[class*="article"]', '[class*="Article"]',
+      '[class*="note"]', '[class*="Note"]',
+      '[class*="post"]', '[class*="Post"]',
+      '[class*="item"]', '[class*="Item"]',
+      '[class*="card"]', '[class*="Card"]',
+      '[data-testid*="article"]', '[data-testid*="note"]'
+    ];
+    
+    for (const selector of articleSelectors) {
+      try {
+        const elements = await page.$$(selector);
+        if (elements.length > 0) {
+          console.log(`記事系セレクター "${selector}" で ${elements.length} 件の要素を検出`);
+          // 最初の要素の詳細情報
+          const firstElementInfo = await elements[0].evaluate(el => ({
+            tagName: el.tagName,
+            className: el.className,
+            id: el.id,
+            childrenCount: el.children.length,
+            textContent: el.textContent ? el.textContent.substring(0, 100) : ''
+          }));
+          console.log('最初の要素の詳細:', JSON.stringify(firstElementInfo, null, 2));
+        }
+      } catch (e) {
+        console.log(`セレクター "${selector}" での検索に失敗:`, e.message);
+      }
+    }
+    
+    // 3. data属性を持つ要素を調査
+    console.log('=== data属性を持つ要素を調査 ===');
+    try {
+      const dataElements = await page.evaluate(() => {
+        const elements = document.querySelectorAll('[data-testid], [data-cy], [data-qa], [data-automation]');
+        return Array.from(elements).slice(0, 10).map(el => ({
+          tagName: el.tagName,
+          className: el.className,
+          dataTestId: el.getAttribute('data-testid'),
+          dataCy: el.getAttribute('data-cy'),
+          dataQa: el.getAttribute('data-qa'),
+          dataAutomation: el.getAttribute('data-automation'),
+          textContent: el.textContent ? el.textContent.substring(0, 50) : ''
+        }));
+      });
+      console.log('data属性を持つ要素:', JSON.stringify(dataElements, null, 2));
+    } catch (e) {
+      console.log('data属性の調査に失敗:', e.message);
+    }
+    
+    // 4. 現在のページが空の状態かどうかを確認
+    console.log('=== 空の状態チェック ===');
+    try {
+      const emptyStateCheck = await page.evaluate(() => {
+        const text = document.body.textContent || '';
+        return {
+          hasEmptyMessage: text.includes('記事がありません') || text.includes('下書きがありません') || text.includes('投稿がありません'),
+          hasNoDataMessage: text.includes('データがありません') || text.includes('まだありません'),
+          hasCreateButton: text.includes('記事を書く') || text.includes('新規作成'),
+          bodyTextSample: text.substring(0, 500)
+        };
+      });
+      console.log('空の状態チェック結果:', JSON.stringify(emptyStateCheck, null, 2));
+    } catch (e) {
+      console.log('空の状態チェックに失敗:', e.message);
+    }
     
     // 他の可能性のあるセレクターを試す
     const alternativeSelectors = [
