@@ -26,18 +26,141 @@ const { TwitterApi } = require('twitter-api-v2');
   await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
   console.log('ログイン完了');
 
+  // ログイン後の状態を詳細に確認
+  console.log('ログイン後の詳細な状態を確認します');
+  const currentUrl = page.url();
+  const currentTitle = await page.title();
+  console.log('現在のURL:', currentUrl);
+  console.log('現在のページタイトル:', currentTitle);
+  
+  // ページのHTML構造を部分的に確認
+  try {
+    const bodyContent = await page.evaluate(() => {
+      const body = document.body;
+      return body ? body.innerHTML.substring(0, 500) : 'body要素が見つかりません';
+    });
+    console.log('ページのbody要素の最初の500文字:', bodyContent);
+  } catch (e) {
+    console.log('ページ内容の取得に失敗:', e.message);
+  }
+
   const draftUrl = 'https://note.com/notes?page=1&status=draft';
   console.log('下書き一覧ページへ遷移します:', draftUrl);
-  await page.goto(draftUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  console.log('下書き一覧ページに到達しました');
+  
+  // 遷移前の状態を記録
+  console.log('遷移前のURL:', page.url());
+  
+  try {
+    await page.goto(draftUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    console.log('下書き一覧ページに到達しました');
+  } catch (e) {
+    console.log('下書き一覧ページへの遷移に失敗:', e.message);
+    const errorUrl = page.url();
+    const errorTitle = await page.title();
+    console.log('エラー時のURL:', errorUrl);
+    console.log('エラー時のページタイトル:', errorTitle);
+    throw e;
+  }
+  
+  // 遷移後の状態を詳細に確認
+  console.log('遷移後の詳細な状態を確認します');
+  const afterUrl = page.url();
+  const afterTitle = await page.title();
+  console.log('遷移後のURL:', afterUrl);
+  console.log('遷移後のページタイトル:', afterTitle);
+  
   // ページ遷移後に少し待機
-
+  console.log('ページ読み込み完了を待機します（1.5秒）');
   await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5秒待機
+
+  // ページの状態をさらに詳細に確認
+  console.log('ページの詳細な状態を確認します');
+  try {
+    const pageContent = await page.evaluate(() => {
+      const content = document.documentElement.innerHTML;
+      return {
+        hasContent: content.length > 0,
+        contentLength: content.length,
+        hasArticleList: content.includes('o-articleList'),
+        hasArticleItem: content.includes('o-articleList__item'),
+        bodyClasses: document.body ? document.body.className : 'body要素なし',
+        headTitle: document.title
+      };
+    });
+    console.log('ページ内容の詳細:', JSON.stringify(pageContent, null, 2));
+  } catch (e) {
+    console.log('ページ内容の詳細確認に失敗:', e.message);
+  }
 
   // 下書き記事リストを取得
   console.log('下書き記事リストを取得します');
-  const articles = await page.$$('div.o-articleList__item');
-  console.log(`下書き記事を${articles.length}件検出しました`);
+  console.log('セレクター "div.o-articleList__item" で要素を検索します');
+  
+  let articles = [];
+  try {
+    articles = await page.$$('div.o-articleList__item');
+    console.log(`下書き記事を${articles.length}件検出しました`);
+  } catch (e) {
+    console.log('記事リストの取得に失敗:', e.message);
+  }
+  
+  // 記事が見つからない場合の追加調査
+  if (articles.length === 0) {
+    console.log('記事が見つからないため、追加調査を行います');
+    
+    // 他の可能性のあるセレクターを試す
+    const alternativeSelectors = [
+      '.o-articleList__item',
+      '[class*="articleList"]',
+      '[class*="article"]',
+      'article',
+      'li[class*="article"]',
+      'div[class*="article"]'
+    ];
+    
+    for (const selector of alternativeSelectors) {
+      try {
+        const elements = await page.$$(selector);
+        console.log(`セレクター "${selector}" で ${elements.length} 件の要素を検出`);
+        if (elements.length > 0) {
+          // 最初の要素のクラス名を確認
+          const firstElementClass = await elements[0].evaluate(el => el.className);
+          console.log(`最初の要素のクラス名: ${firstElementClass}`);
+        }
+      } catch (e) {
+        console.log(`セレクター "${selector}" での検索に失敗:`, e.message);
+      }
+    }
+    
+    // ページ全体のクラス名を確認
+    try {
+      const allClasses = await page.evaluate(() => {
+        const elements = document.querySelectorAll('*[class]');
+        const classes = new Set();
+        elements.forEach(el => {
+          el.className.split(' ').forEach(cls => {
+            if (cls && cls.includes('article')) {
+              classes.add(cls);
+            }
+          });
+        });
+        return Array.from(classes).slice(0, 20); // 最大20個まで
+      });
+      console.log('記事関連のクラス名:', allClasses);
+    } catch (e) {
+      console.log('クラス名の調査に失敗:', e.message);
+    }
+    
+    // ページのスクリーンショットを撮影（デバッグ用）
+    if (!isCI) {
+      try {
+        await page.screenshot({ path: 'debug_draft_page.png', fullPage: true });
+        console.log('デバッグ用スクリーンショットを保存しました: debug_draft_page.png');
+      } catch (e) {
+        console.log('スクリーンショットの保存に失敗:', e.message);
+      }
+    }
+  }
 
   const POST_LIMIT = 1; // 投稿数の上限（必要に応じて変更）
   let postCount = 0;
