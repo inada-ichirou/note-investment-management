@@ -88,9 +88,12 @@ auto-publish-notes:
   extends: .note-job-template
   stage: note-tasks
 
-  # 実行条件：スケジュール実行（RUN_PUBLISH_NOTES）のみ
+  # 実行条件：スケジュール実行（RUN_PUBLISH_NOTES）または手動実行
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUN_PUBLISH_NOTES == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+      allow_failure: true
 
   script:
     - echo "autoPublishNotes.js を実行中..."
