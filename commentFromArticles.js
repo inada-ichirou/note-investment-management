@@ -52,7 +52,7 @@ function saveCommentedArticles(list) {
   const isCI = process.env.CI === 'true';
   logTime('puppeteer.launch 開始');
   const browser = await puppeteer.launch({
-    headless: isCI ? 'old' : false,
+    headless: isCI ? 'new' : false,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',

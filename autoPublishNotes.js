@@ -7,7 +7,7 @@ const { TwitterApi } = require('twitter-api-v2');
   const isCI = process.env.CI === 'true';
   console.log('Puppeteerを起動します');
   const browser = await puppeteer.launch({
-    headless: isCI ? 'old' : false,
+    headless: isCI ? 'new' : false,
     protocolTimeout: 120000,
     args: [
       '--no-sandbox',

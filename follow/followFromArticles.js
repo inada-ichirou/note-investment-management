@@ -21,7 +21,7 @@ function logTime(label) {
   console.log('isCI:', isCI);
   logTime('puppeteer.launch 開始');
   const browser = await puppeteer.launch({
-    headless: isCI ? 'old' : false,
+    headless: isCI ? 'new' : false,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
