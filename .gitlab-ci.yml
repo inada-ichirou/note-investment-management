@@ -77,7 +77,8 @@ auto-create-and-draft-note:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUN_CREATE_DRAFT == "true"'
     - if: '$CI_PIPELINE_SOURCE == "web"'
-    - if: '$CI_PIPELINE_SOURCE == "api"'
+      when: manual
+      allow_failure: true
 
   script:
     - echo "autoCreateAndDraftNote.js を実行中..."
