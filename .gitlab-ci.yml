@@ -5,11 +5,8 @@
 # 45 2,8,14 * * * (JST 11:45, 17:45, 23:45に相当)
 
 stages:
-  - debug
-  - create-and-draft
-  - publish-notes
-  - like-notes
-  - follow-from-articles
+  # - debug
+  - note-tasks
 
 variables:
   NODE_VERSION: "20"
@@ -74,7 +71,7 @@ variables:
 # 記事作成・下書き保存ジョブ
 auto-create-and-draft-note:
   extends: .note-job-template
-  stage: create-and-draft
+  stage: note-tasks
 
   # 実行条件：スケジュール実行（RUN_CREATE_DRAFT）または手動実行
   rules:
@@ -89,7 +86,7 @@ auto-create-and-draft-note:
 # 記事自動公開ジョブ
 auto-publish-notes:
   extends: .note-job-template
-  stage: publish-notes
+  stage: note-tasks
 
   # 実行条件：スケジュール実行（RUN_PUBLISH_NOTES）のみ
   rules:
@@ -103,7 +100,7 @@ auto-publish-notes:
 # 記事いいね機能ジョブ
 like-notes:
   extends: .note-job-template
-  stage: like-notes
+  stage: note-tasks
 
   # 実行条件：スケジュール実行（RUN_LIKE_NOTES）または手動実行
   rules:
@@ -119,7 +116,7 @@ like-notes:
 # 記事からフォロー機能ジョブ
 follow-from-articles:
   extends: .note-job-template
-  stage: follow-from-articles
+  stage: note-tasks
 
   # 実行条件：スケジュール実行（RUN_FOLLOW_FROM_ARTICLES）または手動実行
   rules:
@@ -138,7 +135,7 @@ follow-from-articles:
 # 手動実行専用ジョブ（必要に応じて）
 manual-create-and-draft-note:
   extends: .note-job-template
-  stage: create-and-draft
+  stage: note-tasks
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: manual
