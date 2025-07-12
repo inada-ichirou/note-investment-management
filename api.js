@@ -1,3 +1,4 @@
+console.log('=== api.js: サーバー起動処理開始 ===');
 // 必要なモジュールを読み込み
 const express = require('express');
 const app = express();
