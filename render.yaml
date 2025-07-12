@@ -1,0 +1,12 @@
+services:
+  - type: cron
+    name: note-investment-scheduler
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    schedule: "0 */6 * * *"  # 6時間ごと（0, 6, 12, 18時）
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CI
+        value: true 

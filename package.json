@@ -1,8 +1,23 @@
 {
+  "name": "note-investment-management",
+  "version": "1.0.0",
+  "description": "Note投資管理自動化ツール",
+  "main": "scheduler.js",
+  "scripts": {
+    "start": "node scheduler.js",
+    "test": "node testBrowserLogin.js",
+    "create-draft": "node autoCreateAndDraftNote.js",
+    "follow": "node follow/followFromArticles.js",
+    "like": "node likeUnlikedNotes.js",
+    "publish": "node autoPublishNotes.js"
+  },
   "dependencies": {
     "axios": "^1.9.0",
     "dotenv": "^16.5.0",
     "puppeteer": "^24.10.0",
     "twitter-api-v2": "^1.23.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
