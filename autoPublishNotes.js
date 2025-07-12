@@ -1,7 +1,7 @@
 require('dotenv').config();
 const puppeteer = require('puppeteer');
 const { login } = require('./noteAutoDraftAndSheetUpdate');
-const { TwitterApi } = require('twitter-api-v2');
+// const { TwitterApi } = require('twitter-api-v2'); // Twitter連携不要のため削除
 
 (async () => {
   const isCI = process.env.CI === 'true';
@@ -458,18 +458,18 @@ const { TwitterApi } = require('twitter-api-v2');
           : `note記事を公開しました！\n${title}`;
         console.log('tweetText:', tweetText);
         // Twitterクライアント初期化
-        const twitterClient = new TwitterApi({
-          appKey: process.env.TWITTER_API_KEY,
-          appSecret: process.env.TWITTER_API_SECRET,
-          accessToken: process.env.TWITTER_ACCESS_TOKEN,
-          accessSecret: process.env.TWITTER_ACCESS_SECRET,
-        });
-        console.log('TwitterApiクライアント初期化完了');
+        // const twitterClient = new TwitterApi({ // Twitter連携不要のため削除
+        //   appKey: process.env.TWITTER_API_KEY,
+        //   appSecret: process.env.TWITTER_API_SECRET,
+        //   accessToken: process.env.TWITTER_ACCESS_TOKEN,
+        //   accessSecret: process.env.TWITTER_ACCESS_SECRET,
+        // });
+        // console.log('TwitterApiクライアント初期化完了'); // Twitter連携不要のため削除
 
-        await twitterClient.v2.tweet({
-          text: tweetText
-        });
-        console.log('Twitterにも自動投稿しました:', tweetText);
+        // await twitterClient.v2.tweet({ // Twitter連携不要のため削除
+        //   text: tweetText
+        // });
+        // console.log('Twitterにも自動投稿しました:', tweetText); // Twitter連携不要のため削除
       } catch (e) {
         console.error('Twitter自動投稿に失敗:', e);
       }
