@@ -4,11 +4,17 @@
 const isLambda = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 require('dotenv').config();
 
-let puppeteer, launchOptions;
+// --- Puppeteerのrequire方法 ---
+// Renderなどのクラウド環境ではpuppeteer本体を使う必要があるため、puppeteerをrequireします。
+// GitHub Actionsなどでpuppeteer-coreを使いたい場合は、適宜切り替えてください。
+// 例: process.env.PUPPETEER_EXECUTABLE_PATH で分岐するなど
+const puppeteer = require('puppeteer');
+// const puppeteer = require('puppeteer-core'); // ←GitHub Actions等でchromeを自前で用意する場合はこちら
+
+let launchOptions;
 
 if (isLambda) {
   // Lambda本番用
-  puppeteer = require('puppeteer-core');
   const chromium = require('chrome-aws-lambda');
   launchOptions = async () => ({
     args: chromium.args,
@@ -18,7 +24,6 @@ if (isLambda) {
   });
 } else {
   // ローカルテスト用
-  puppeteer = require('puppeteer');
   launchOptions = async () => ({
     headless: false,
     executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
