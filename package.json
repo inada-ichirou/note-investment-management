@@ -4,7 +4,7 @@
   "description": "Note投資管理自動化ツール",
   "main": "scheduler.js",
   "scripts": {
-    "start": "node scheduler.js",
+    "start": "node api.js",
     "test": "node testBrowserLogin.js",
     "create-draft": "node autoCreateAndDraftNote.js",
     "follow": "node follow/followFromArticles.js",
