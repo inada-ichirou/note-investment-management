@@ -10,6 +10,14 @@ const followFromArticles = require('./follow/followFromArticles.js');
 const likeUnlikedNotes = require('./likeUnlikedNotes.js');
 const autoPublishNotes = require('./autoPublishNotes.js');
 
+// ルート（/）へのアクセスに簡単なレスポンスを返す
+app.get('/', (req, res) => {
+  res.send('APIサーバーは稼働中です');
+});
+
+// /favicon.ico へのアクセスには204 No Contentを返す
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // 下書き作成API
 app.get('/create-draft', async (req, res) => {
   console.log('=== api.js: /create-draft リクエスト受信 ===');
