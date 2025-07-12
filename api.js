@@ -12,6 +12,7 @@ const autoPublishNotes = require('./autoPublishNotes.js');
 
 // 下書き作成API
 app.get('/create-draft', async (req, res) => {
+  console.log('=== api.js: /create-draft リクエスト受信 ===');
   try {
     if (typeof autoCreateAndDraftNote.main === 'function') {
       await autoCreateAndDraftNote.main();
@@ -26,6 +27,7 @@ app.get('/create-draft', async (req, res) => {
 
 // フォローAPI
 app.get('/follow', async (req, res) => {
+  console.log('=== api.js: /follow リクエスト受信 ===');
   try {
     if (typeof followFromArticles.main === 'function') {
       await followFromArticles.main();
@@ -40,6 +42,7 @@ app.get('/follow', async (req, res) => {
 
 // いいねAPI
 app.get('/like', async (req, res) => {
+  console.log('=== api.js: /like リクエスト受信 ===');
   try {
     if (typeof likeUnlikedNotes.main === 'function') {
       await likeUnlikedNotes.main();
@@ -54,6 +57,7 @@ app.get('/like', async (req, res) => {
 
 // 公開API
 app.get('/publish', async (req, res) => {
+  console.log('=== api.js: /publish リクエスト受信 ===');
   try {
     if (typeof autoPublishNotes.main === 'function') {
       await autoPublishNotes.main();
@@ -68,5 +72,5 @@ app.get('/publish', async (req, res) => {
 
 // サーバー起動
 app.listen(port, () => {
-  console.log(`APIサーバー起動: http://localhost:${port}`);
+  console.log(`=== api.js: サーバー起動 http://localhost:${port} ===`);
 }); 

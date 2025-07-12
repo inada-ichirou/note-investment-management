@@ -43,13 +43,16 @@ async function runScript(scriptPath) {
 
 // メイン実行関数
 async function main() {
+  console.log('=== scheduler.js: main() 開始 ===');
   console.log('定期実行スケジューラーを開始します');
   console.log('実行日時:', new Date().toISOString());
   
   const results = [];
   
   for (const script of scripts) {
+    console.log(`=== scheduler.js: ${script} 実行開始 ===`);
     const success = await runScript(script);
+    console.log(`=== scheduler.js: ${script} 実行終了 ===`);
     results.push({ script, success });
     
     // スクリプト間で少し待機（API制限対策）
@@ -75,10 +78,11 @@ async function main() {
   } else {
     console.log('⚠️ 一部のスクリプトでエラーが発生しました');
   }
+  console.log('=== scheduler.js: main() 終了 ===');
 }
 
 // エラーハンドリング付きで実行
 main().catch(error => {
-  console.error('スケジューラーで予期しないエラーが発生しました:', error);
+  console.error('=== scheduler.js: 予期しないエラー ===', error);
   process.exit(1);
 }); 
