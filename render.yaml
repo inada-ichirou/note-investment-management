@@ -4,7 +4,7 @@ services:
     env: node
     buildCommand: npm install
     startCommand: npm start
-    schedule: "0 */6 * * *"  # 6時間ごと（0, 6, 12, 18時）
+    schedule: "0 */3 * * *"  # 3時間ごと（0, 3, 6, 9, 12, 15, 18, 21時）
     envVars:
       - key: NODE_ENV
         value: production
