@@ -20,17 +20,21 @@ function logTime(label) {
   console.log('process.env.CIの値:', process.env.CI);
   console.log('isCI:', isCI);
   logTime('puppeteer.launch 開始');
+  // 実行環境によってheadlessモードを切り替え
+  const isCloud = process.env.RENDER || process.env.CI === 'true'; // RenderやCI環境ならtrue
+  // const isCI = process.env.CI === 'true'; // ←CI(GitHub Actions等)専用の分岐に戻したい場合はこちらを有効化
+  // ※CI用に戻す場合はisCloudの代わりにisCIを使ってください
   const browser = await puppeteer.launch({
-    headless: isCI ? 'new' : false,
+    headless: isCloud ? true : false, // クラウドではtrue、ローカルではfalse
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-gpu',
       '--disable-dev-shm-usage',
-      '--disable-extensions',
       '--window-size=1280,900'
     ],
-    defaultViewport: null
+    // Renderなどクラウド環境でchromeのパスを明示的に指定
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
   });
   logTime('puppeteer.launch 完了');
   logTime('新規ページ作成開始');

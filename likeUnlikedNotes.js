@@ -8,17 +8,21 @@ const { login } = require('./noteAutoDraftAndSheetUpdate'); // login関数をexp
   const isCI = process.env.CI === 'true';
   console.log('process.env.CIの値:', process.env.CI);
   console.log('isCI:', isCI);
+  // 実行環境によってheadlessモードを切り替え
+  const isCloud = process.env.RENDER || process.env.CI === 'true'; // RenderやCI環境ならtrue
+  // const isCI = process.env.CI === 'true'; // ←CI(GitHub Actions等)専用の分岐に戻したい場合はこちらを有効化
+  // ※CI用に戻す場合はisCloudの代わりにisCIを使ってください
   const browser = await puppeteer.launch({
-    headless: isCI ? 'new' : false,
-    defaultViewport: null, // ウインドウサイズをargsで指定するためnullに
+    headless: isCloud ? true : false, // クラウドではtrue、ローカルではfalse
     args: [
-      '--window-size=1280,900',
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-gpu',
-      '--disable-dev-shm-usage'
+      '--disable-dev-shm-usage',
+      '--window-size=1280,900'
     ],
-    defaultViewport: null
+    // Renderなどクラウド環境でchromeのパスを明示的に指定
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
   });
   const page = await browser.newPage();
 
