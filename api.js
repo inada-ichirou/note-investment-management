@@ -2,7 +2,10 @@ console.log('=== api.js: サーバー起動処理開始 ===');
 // 必要なモジュールを読み込み
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
+
+// JSONボディパーサーを有効化
+app.use(express.json());
 
 // 各スクリプトのmain関数をエクスポートしておく必要があります
 // 例: module.exports.main = async function() { ... } という形
@@ -13,7 +16,16 @@ const autoPublishNotes = require('./autoPublishNotes.js');
 
 // ルート（/）へのアクセスに簡単なレスポンスを返す
 app.get('/', (req, res) => {
-  res.send('APIサーバーは稼働中です');
+  res.json({
+    status: 'running',
+    message: 'APIサーバーは稼働中です',
+    endpoints: [
+      '/create-draft - 下書き作成',
+      '/follow - フォロー実行',
+      '/like - いいね実行',
+      '/publish - 記事公開'
+    ]
+  });
 });
 
 // /favicon.ico へのアクセスには204 No Contentを返す
@@ -25,12 +37,13 @@ app.get('/create-draft', async (req, res) => {
   try {
     if (typeof autoCreateAndDraftNote.main === 'function') {
       await autoCreateAndDraftNote.main();
-      res.send('autoCreateAndDraftNote.js 実行完了');
+      res.json({ status: 'success', message: 'autoCreateAndDraftNote.js 実行完了' });
     } else {
-      res.status(500).send('autoCreateAndDraftNote.js に main 関数がありません');
+      res.status(500).json({ status: 'error', message: 'autoCreateAndDraftNote.js に main 関数がありません' });
     }
   } catch (e) {
-    res.status(500).send('エラー: ' + e.message);
+    console.error('=== api.js: /create-draft エラー ===', e);
+    res.status(500).json({ status: 'error', message: 'エラー: ' + e.message });
   }
 });
 
@@ -40,12 +53,13 @@ app.get('/follow', async (req, res) => {
   try {
     if (typeof followFromArticles.main === 'function') {
       await followFromArticles.main();
-      res.send('followFromArticles.js 実行完了');
+      res.json({ status: 'success', message: 'followFromArticles.js 実行完了' });
     } else {
-      res.status(500).send('followFromArticles.js に main 関数がありません');
+      res.status(500).json({ status: 'error', message: 'followFromArticles.js に main 関数がありません' });
     }
   } catch (e) {
-    res.status(500).send('エラー: ' + e.message);
+    console.error('=== api.js: /follow エラー ===', e);
+    res.status(500).json({ status: 'error', message: 'エラー: ' + e.message });
   }
 });
 
@@ -55,12 +69,13 @@ app.get('/like', async (req, res) => {
   try {
     if (typeof likeUnlikedNotes.main === 'function') {
       await likeUnlikedNotes.main();
-      res.send('likeUnlikedNotes.js 実行完了');
+      res.json({ status: 'success', message: 'likeUnlikedNotes.js 実行完了' });
     } else {
-      res.status(500).send('likeUnlikedNotes.js に main 関数がありません');
+      res.status(500).json({ status: 'error', message: 'likeUnlikedNotes.js に main 関数がありません' });
     }
   } catch (e) {
-    res.status(500).send('エラー: ' + e.message);
+    console.error('=== api.js: /like エラー ===', e);
+    res.status(500).json({ status: 'error', message: 'エラー: ' + e.message });
   }
 });
 
@@ -70,16 +85,35 @@ app.get('/publish', async (req, res) => {
   try {
     if (typeof autoPublishNotes.main === 'function') {
       await autoPublishNotes.main();
-      res.send('autoPublishNotes.js 実行完了');
+      res.json({ status: 'success', message: 'autoPublishNotes.js 実行完了' });
     } else {
-      res.status(500).send('autoPublishNotes.js に main 関数がありません');
+      res.status(500).json({ status: 'error', message: 'autoPublishNotes.js に main 関数がありません' });
     }
   } catch (e) {
-    res.status(500).send('エラー: ' + e.message);
+    console.error('=== api.js: /publish エラー ===', e);
+    res.status(500).json({ status: 'error', message: 'エラー: ' + e.message });
   }
 });
 
+// ヘルスチェックAPI
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// 404エラーハンドリング
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    status: 'error', 
+    message: 'エンドポイントが見つかりません',
+    availableEndpoints: ['/', '/health', '/create-draft', '/follow', '/like', '/publish']
+  });
+});
+
 // サーバー起動
-app.listen(port, () => {
-  console.log(`=== api.js: サーバー起動 http://localhost:${port} ===`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`=== api.js: サーバー起動 http://0.0.0.0:${port} ===`);
 }); 
