@@ -105,7 +105,7 @@ app.get('/health', (req, res) => {
 });
 
 // 404エラーハンドリング
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({ 
     status: 'error', 
     message: 'エンドポイントが見つかりません',
