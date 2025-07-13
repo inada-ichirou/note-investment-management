@@ -21,7 +21,11 @@ RUN apk add --no-cache \
     freetype-dev \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    dbus \
+    xvfb \
+    x11vnc \
+    fluxbox
 
 # Puppeteerの環境変数を設定
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \

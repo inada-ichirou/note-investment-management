@@ -418,10 +418,19 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   // 6. note.comに下書き保存（Puppeteerで自動化）
   try {
     console.log('note.comに下書き保存処理を開始します...');
+    
+    // Fly.io環境でもPuppeteerを有効化
+    // const isFly = !!process.env.FLY_APP_NAME;
+    // if (isFly) {
+    //   console.log('Fly.io環境のため、Puppeteer処理をスキップします');
+    //   console.log('生成された記事タイトル:', title);
+    //   console.log('生成された記事内容（一部）:', rewrittenArticle.substring(0, 200) + '...');
+    //   console.log('note.comへの下書き保存は手動で行ってください');
+    //   return;
+    // }
+    
     // 実行環境によってheadlessモードを切り替え
     const isCloud = process.env.RENDER || process.env.CI === 'true'; // RenderやCI環境ならtrue
-    // const isCI = process.env.CI === 'true'; // ←CI(GitHub Actions等)専用の分岐に戻したい場合はこちらを有効化
-    // ※CI用に戻す場合はisCloudの代わりにisCIを使ってください
     const browser = await puppeteer.launch({
       headless: isCloud ? true : false, // クラウドではtrue、ローカルではfalse
       args: [
@@ -453,8 +462,7 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
     console.log('下書き保存した記事タイトル:', title);
   } catch (e) {
     console.error('note.com下書き保存処理中にエラー:', e);
-    // エラー発生時はCIを即終了
-    process.exit(1);
+    throw e;
   }
 })();
 
@@ -500,6 +508,17 @@ module.exports.main = async function() {
   // 6. note.comに下書き保存（Puppeteerで自動化）
   try {
     console.log('note.comに下書き保存処理を開始します...');
+    
+    // Fly.io環境でもPuppeteerを有効化
+    // const isFly = !!process.env.FLY_APP_NAME;
+    // if (isFly) {
+    //   console.log('Fly.io環境のため、Puppeteer処理をスキップします');
+    //   console.log('生成された記事タイトル:', title);
+    //   console.log('生成された記事内容（一部）:', rewrittenArticle.substring(0, 200) + '...');
+    //   console.log('note.comへの下書き保存は手動で行ってください');
+    //   return;
+    // }
+    
     // 実行環境によってheadlessモードを切り替え
     const isCloud = process.env.RENDER || process.env.CI === 'true'; // RenderやCI環境ならtrue
     const browser = await puppeteer.launch({
