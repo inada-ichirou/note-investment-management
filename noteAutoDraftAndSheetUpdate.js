@@ -3,6 +3,7 @@
 // Lambda本番用 + ローカルテスト両対応のnote自動投稿スクリプト
 const isLambda = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 require('dotenv').config();
+const isFly = !!process.env.FLY_APP_NAME; // Fly.io環境判定を追加
 
 // --- Puppeteerのrequire方法 ---
 // Renderなどのクラウド環境ではpuppeteer本体を使う必要があるため、puppeteerをrequireします。
@@ -27,9 +28,10 @@ if (isLambda) {
   const isCI = process.env.CI === 'true';
   console.log('process.env.CIの値:', process.env.CI);
   console.log('isCI:', isCI);
+  console.log('isFly:', isFly);
   
   launchOptions = async () => ({
-    headless: isCI ? true : false,
+    headless: isLambda || isFly || isCI ? true : false,
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     args: [
       '--no-sandbox',
