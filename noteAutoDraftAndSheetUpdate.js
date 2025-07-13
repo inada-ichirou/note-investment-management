@@ -23,15 +23,21 @@ if (isLambda) {
     headless: chromium.headless,
   });
 } else {
-  // ローカルテスト用
+  // ローカルテスト用 + Fly.io用
+  const isCI = process.env.CI === 'true';
+  console.log('process.env.CIの値:', process.env.CI);
+  console.log('isCI:', isCI);
+  
   launchOptions = async () => ({
-    headless: false,
-    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    headless: isCI ? true : false,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-gpu',
-      '--disable-dev-shm-usage'
+      '--disable-dev-shm-usage',
+      '--disable-web-security',
+      '--disable-features=VizDisplayCompositor'
     ],
     defaultViewport: null
   });

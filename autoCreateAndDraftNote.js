@@ -456,4 +456,83 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
     // エラー発生時はCIを即終了
     process.exit(1);
   }
-})(); 
+})();
+
+// APIサーバー用のmain関数をエクスポート
+module.exports.main = async function() {
+  // 1. 題材ランダム選択
+  const topic = topics[Math.floor(Math.random() * topics.length)];
+  // 2. 切り口ランダム選択
+  const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+  console.log('選ばれた題材:', topic);
+  console.log('選ばれた切り口:', pattern);
+
+  // 3. AIで記事生成
+  const article = await generateArticle(topic, pattern);
+  console.log('AI生成記事全文:\n', article);
+  if (!article || article.length < 30) {
+    console.error('AI記事生成に失敗、または内容が不十分です。処理を中断します。');
+    return;
+  }
+
+  // 4. タイトル抽出（# タイトル 形式を強化）
+  let title = '無題';
+  const titleMatch = article.match(/^#\s*(.+)$/m);
+  if (titleMatch && titleMatch[1].trim().length > 0) {
+    title = titleMatch[1].trim();
+  } else {
+    // 先頭行がタイトルでない場合、最初の10文字を仮タイトルに
+    title = article.split('\n').find(line => line.trim().length > 0)?.slice(0, 10) || '無題';
+  }
+
+  // 本文から「タイトルと同じh1行（# タイトル）」をすべて除去する
+  const h1TitleLine = `# ${title}`;
+  const articleLines = article.split('\n');
+  console.log('タイトル:', title);
+  console.log('h1TitleLine:', JSON.stringify(h1TitleLine));
+  const filteredArticleLines = articleLines.filter(line => line.trim() !== h1TitleLine);
+  const filteredArticle = filteredArticleLines.join('\n');
+
+  // 5. 記事リライト・チェック（直接関数で処理）
+  let rewrittenArticle = await rewriteAndTagArticle(filteredArticle, API_URL, API_KEY, MODEL);
+  console.log('記事リライト・チェックが完了しました');
+
+  // 6. note.comに下書き保存（Puppeteerで自動化）
+  try {
+    console.log('note.comに下書き保存処理を開始します...');
+    // 実行環境によってheadlessモードを切り替え
+    const isCloud = process.env.RENDER || process.env.CI === 'true'; // RenderやCI環境ならtrue
+    const browser = await puppeteer.launch({
+      headless: isCloud ? true : false, // クラウドではtrue、ローカルではfalse
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--window-size=1280,900'
+      ],
+      // Renderなどクラウド環境でchromeのパスを明示的に指定
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+    });
+    const page = await browser.newPage();
+    // noteにログイン
+    await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
+    // 新規投稿画面へ遷移
+    await goToNewPost(page);
+    // サムネイル画像アップロード
+    await dragAndDropToAddButton(page);
+    // 記事タイトル・本文を入力
+    await fillArticle(page, title, rewrittenArticle); // リライト・タグ付与済み本文
+    // 下書き保存
+    await saveDraft(page);
+    // ダイアログを閉じる
+    await closeDialogs(page);
+    await browser.close();
+    console.log('note.comへの下書き保存が完了しました');
+    // 成功時に記事タイトルを表示
+    console.log('下書き保存した記事タイトル:', title);
+  } catch (e) {
+    console.error('note.com下書き保存処理中にエラー:', e);
+    throw e;
+  }
+}; 
