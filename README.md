@@ -1,52 +1,66 @@
 # Note投資管理自動化ツール
 
-投資関連の記事を自動で作成、投稿、フォロー、いいねを行う自動化ツールです。
+Note.comでの投資関連記事の自動投稿・管理ツール
 
 ## 機能
 
-- **autoCreateAndDraftNote.js**: 投資関連記事の自動作成と下書き保存
-- **follow/followFromArticles.js**: 記事からユーザーを自動フォロー
-- **likeUnlikedNotes.js**: 投資関連記事への自動いいね
-- **autoPublishNotes.js**: 下書き記事の自動公開
+- 投資記事の自動下書き作成
+- フォロー機能の自動化
+- いいね機能の自動化
+- 記事の自動公開
 
-## Renderでの定期実行設定
+## Cyclic.shでのデプロイ手順
 
-### 1. 環境変数の設定
+### 1. Cyclic.shアカウント作成
+1. [Cyclic.sh](https://cyclic.sh) にアクセス
+2. GitHubアカウントでサインアップ
 
-Renderのダッシュボードで以下の環境変数を設定してください：
+### 2. プロジェクト接続
+1. Cyclic.shダッシュボードで「Link Your Own」を選択
+2. GitHubリポジトリを選択
+3. ブランチを選択（mainまたはmaster）
+
+### 3. 環境変数設定
+Cyclic.shダッシュボードで以下の環境変数を設定：
 
 ```
 NOTE_EMAIL=your-email@example.com
 NOTE_PASSWORD=your-password
+NODE_ENV=production
 ```
 
-### 2. スケジュール設定
+### 4. デプロイ
+- 自動的にデプロイが開始されます
+- ビルドログでエラーがないことを確認
 
-現在の設定：6時間ごと（0, 6, 12, 18時）
-- `render.yaml`の`schedule`を変更することで実行頻度を調整可能
+### 5. APIエンドポイント
+デプロイ後、以下のエンドポイントが利用可能：
 
-### 3. 実行順序
+- `GET /` - ヘルスチェック
+- `GET /create-draft` - 下書き作成
+- `GET /follow` - フォロー実行
+- `GET /like` - いいね実行
+- `GET /publish` - 記事公開
 
-1. autoCreateAndDraftNote.js - 記事作成
-2. follow/followFromArticles.js - フォロー
-3. likeUnlikedNotes.js - いいね
-4. autoPublishNotes.js - 記事公開
+### 6. 定期実行設定
+外部スケジューラー（cron-job.org等）で以下のURLを定期実行：
 
-## ローカル実行
+```
+https://your-app-name.cyclic.app/create-draft
+https://your-app-name.cyclic.app/follow
+https://your-app-name.cyclic.app/like
+https://your-app-name.cyclic.app/publish
+```
+
+## ローカル開発
 
 ```bash
-# 全スクリプトを順次実行
+npm install
 npm start
-
-# 個別実行
-npm run create-draft
-npm run follow
-npm run like
-npm run publish
 ```
 
 ## 注意事項
 
-- 各スクリプト間に30秒の待機時間を設けてAPI制限を回避
-- エラーが発生しても他のスクリプトは継続実行
-- 実行結果はログで確認可能
+- Cyclic.shの無料枠では月間実行時間に制限があります
+- 環境変数は必ず設定してください
+- Puppeteerの動作に時間がかかる場合があります
