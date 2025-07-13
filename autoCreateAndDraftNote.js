@@ -15,16 +15,13 @@ const axios = require('axios');
 const API_KEY = process.env.OPENROUTER_API_KEY;
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-// APIキーのクリーンアップ（余分な空白や改行を削除）
-const cleanAPIKey = API_KEY ? API_KEY.trim() : null;
-
 // デバッグ用：環境変数の確認
 console.log('=== 環境変数確認 ===');
 console.log('process.env.OPENROUTER_API_KEY:', process.env.OPENROUTER_API_KEY ? '設定済み' : '未設定');
-console.log('API_KEY:', cleanAPIKey ? '設定済み' : '未設定');
+console.log('API_KEY:', API_KEY ? '設定済み' : '未設定');
 
 // APIキーの確認
-if (!cleanAPIKey) {
+if (!API_KEY) {
   console.error('エラー: OPENROUTER_API_KEY環境変数が設定されていません');
   console.error('設定方法:');
   console.error('1. .envファイルに OPENROUTER_API_KEY=your-api-key を追加');
@@ -35,12 +32,12 @@ if (!cleanAPIKey) {
 
 // APIキーの詳細確認
 console.log('=== APIキー詳細確認 ===');
-console.log('APIキーの長さ:', cleanAPIKey.length);
-console.log('APIキーの先頭:', cleanAPIKey.substring(0, 10));
-console.log('APIキーの末尾:', cleanAPIKey.substring(cleanAPIKey.length - 10));
-console.log('APIキーに空白が含まれているか:', cleanAPIKey.includes(' '));
-console.log('APIキーに改行が含まれているか:', cleanAPIKey.includes('\n'));
-console.log('APIキーにタブが含まれているか:', cleanAPIKey.includes('\t'));
+console.log('APIキーの長さ:', API_KEY.length);
+console.log('APIキーの先頭:', API_KEY.substring(0, 10));
+console.log('APIキーの末尾:', API_KEY.substring(API_KEY.length - 10));
+console.log('APIキーに空白が含まれているか:', API_KEY.includes(' '));
+console.log('APIキーに改行が含まれているか:', API_KEY.includes('\n'));
+console.log('APIキーにタブが含まれているか:', API_KEY.includes('\t'));
 
 // const MODEL = 'google/gemini-pro'; // 必要に応じて変更
 // const MODEL = 'google/gemini-2.5-pro-exp-03-25';
@@ -168,8 +165,8 @@ async function generateArticle(topic, pattern) {
       // });
       // console.log('AI記事生成APIリクエストモデル:', MODEL);
       // APIキーの一部だけ（セキュリティのため）
-      if (cleanAPIKey) {
-        console.log('API_KEYの先頭6文字:', cleanAPIKey.slice(0, 6), '...（省略）');
+      if (API_KEY) {
+        console.log('API_KEYの先頭6文字:', API_KEY.slice(0, 6), '...（省略）');
       } else {
         console.log('API_KEYが未設定です');
       }
@@ -180,7 +177,7 @@ async function generateArticle(topic, pattern) {
         temperature: 0.7
       }, {
         headers: {
-          'Authorization': `Bearer ${cleanAPIKey}`,
+          'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json'
         }
       });
@@ -415,7 +412,7 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   // });
 
   // 5. 記事リライト・チェック（直接関数で処理）
-  let rewrittenArticle = await rewriteAndTagArticle(filteredArticle, API_URL, cleanAPIKey, MODEL);
+  let rewrittenArticle = await rewriteAndTagArticle(filteredArticle, API_URL, API_KEY, MODEL);
   console.log('記事リライト・チェックが完了しました');
 
   // 6. note.comに下書き保存（Puppeteerで自動化）
