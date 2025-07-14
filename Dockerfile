@@ -4,11 +4,11 @@ FROM buildkite/puppeteer:latest
 # 作業ディレクトリを設定
 WORKDIR /app
 
-# package.jsonとpackage-lock.jsonをコピー
-COPY package*.json ./
+# package.jsonをコピー
+COPY package.json ./
 
-# 依存関係をインストール
-RUN npm ci --only=production
+# 依存関係をインストール（npm ciではなくnpm installを使用）
+RUN npm install --production
 
 # アプリケーションのソースコードをコピー
 COPY . .
