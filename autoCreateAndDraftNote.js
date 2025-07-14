@@ -419,7 +419,7 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   try {
     console.log('note.comに下書き保存処理を開始します...');
     
-    // buildkite/puppeteerベースイメージ用のPuppeteer起動オプション
+    // Fly.io環境でのPuppeteer起動オプション（Will Schenkの記事を参考）
     const isFly = !!process.env.FLY_APP_NAME;
     const isCI = process.env.CI === 'true';
     console.log('process.env.CIの値:', process.env.CI);
@@ -427,11 +427,17 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
     console.log('isFly:', isFly);
     
     const browser = await puppeteer.launch({
-      headless: isFly || isCI ? true : false,
+      headless: true,
+      executablePath: '/usr/bin/google-chrome-stable',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-extensions'
       ]
     });
     const page = await browser.newPage();
@@ -500,7 +506,7 @@ module.exports.main = async function() {
   try {
     console.log('note.comに下書き保存処理を開始します...');
     
-    // buildkite/puppeteerベースイメージ用のPuppeteer起動オプション
+    // Fly.io環境でのPuppeteer起動オプション（Will Schenkの記事を参考）
     const isFly = !!process.env.FLY_APP_NAME;
     const isCI = process.env.CI === 'true';
     console.log('process.env.CIの値:', process.env.CI);
@@ -508,11 +514,17 @@ module.exports.main = async function() {
     console.log('isFly:', isFly);
     
     const browser = await puppeteer.launch({
-      headless: isFly || isCI ? true : false,
+      headless: true,
+      executablePath: '/usr/bin/google-chrome-stable',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-extensions'
       ]
     });
     const page = await browser.newPage();
