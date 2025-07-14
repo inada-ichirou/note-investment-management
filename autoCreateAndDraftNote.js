@@ -419,29 +419,29 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   try {
     console.log('note.comに下書き保存処理を開始します...');
     
-    // Fly.io環境でもPuppeteerを有効化
-    // const isFly = !!process.env.FLY_APP_NAME;
-    // if (isFly) {
-    //   console.log('Fly.io環境のため、Puppeteer処理をスキップします');
-    //   console.log('生成された記事タイトル:', title);
-    //   console.log('生成された記事内容（一部）:', rewrittenArticle.substring(0, 200) + '...');
-    //   console.log('note.comへの下書き保存は手動で行ってください');
-    //   return;
-    // }
-    
-    // 実行環境によってheadlessモードを切り替え
-    const isCloud = process.env.RENDER || process.env.CI === 'true'; // RenderやCI環境ならtrue
+    // Fly.io環境でのPuppeteer起動オプション
     const browser = await puppeteer.launch({
-      headless: isCloud ? true : false, // クラウドではtrue、ローカルではfalse
+      headless: 'new', // Fly.io環境では'new'モードを使用
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-gpu',
         '--disable-dev-shm-usage',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-images',
+        '--disable-javascript',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-field-trial-config',
+        '--disable-ipc-flooding-protection',
         '--window-size=1280,900'
       ],
-      // Renderなどクラウド環境でchromeのパスを明示的に指定
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+      // Fly.io環境での実行パスを固定
+      executablePath: '/usr/bin/chromium-browser'
     });
     const page = await browser.newPage();
     // noteにログイン
@@ -509,29 +509,29 @@ module.exports.main = async function() {
   try {
     console.log('note.comに下書き保存処理を開始します...');
     
-    // Fly.io環境でもPuppeteerを有効化
-    // const isFly = !!process.env.FLY_APP_NAME;
-    // if (isFly) {
-    //   console.log('Fly.io環境のため、Puppeteer処理をスキップします');
-    //   console.log('生成された記事タイトル:', title);
-    //   console.log('生成された記事内容（一部）:', rewrittenArticle.substring(0, 200) + '...');
-    //   console.log('note.comへの下書き保存は手動で行ってください');
-    //   return;
-    // }
-    
-    // 実行環境によってheadlessモードを切り替え
-    const isCloud = process.env.RENDER || process.env.CI === 'true'; // RenderやCI環境ならtrue
+    // Fly.io環境でのPuppeteer起動オプション
     const browser = await puppeteer.launch({
-      headless: isCloud ? true : false, // クラウドではtrue、ローカルではfalse
+      headless: 'new', // Fly.io環境では'new'モードを使用
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-gpu',
         '--disable-dev-shm-usage',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-images',
+        '--disable-javascript',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-field-trial-config',
+        '--disable-ipc-flooding-protection',
         '--window-size=1280,900'
       ],
-      // Renderなどクラウド環境でchromeのパスを明示的に指定
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+      // Fly.io環境での実行パスを固定
+      executablePath: '/usr/bin/chromium-browser'
     });
     const page = await browser.newPage();
     // noteにログイン
