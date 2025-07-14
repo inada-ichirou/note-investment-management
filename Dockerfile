@@ -57,12 +57,29 @@ EXPOSE 8080
 
 # 起動スクリプトを作成
 RUN echo '#!/bin/bash\n\
+echo "=== 起動スクリプト開始 ===\n\
 # Xvfbをバックグラウンドで起動\n\
+echo "Xvfbを起動中..."\n\
 Xvfb :99 -screen 0 1024x768x24 &\n\
+XVFB_PID=$!\n\
+sleep 2\n\
+if ps -p $XVFB_PID > /dev/null; then\n\
+    echo "Xvfb起動成功 (PID: $XVFB_PID)"\n\
+else\n\
+    echo "Xvfb起動失敗"\n\
+    exit 1\n\
+fi\n\
 # dbusを起動\n\
+echo "dbusを起動中..."\n\
 mkdir -p /var/run/dbus\n\
 dbus-daemon --system --fork\n\
+sleep 1\n\
+# 環境変数確認\n\
+echo "DISPLAY=$DISPLAY"\n\
+echo "CHROME_BIN=$CHROME_BIN"\n\
+echo "CHROME_PATH=$CHROME_PATH"\n\
 # アプリケーションを起動\n\
+echo "npm startを実行中..."\n\
 exec npm start' > /app/start.sh \
     && chmod +x /app/start.sh
 

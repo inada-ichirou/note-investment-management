@@ -420,31 +420,60 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
     console.log('note.comに下書き保存処理を開始します...');
     
     // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
+    // 注意: Puppeteerは必須機能のため無効化しない
+    console.log('=== Fly.io環境でのPuppeteer起動 ===');
+    
+    // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
     const isFly = !!process.env.FLY_APP_NAME;
     const isCI = process.env.CI === 'true';
     console.log('process.env.CIの値:', process.env.CI);
     console.log('isCI:', isCI);
     console.log('isFly:', isFly);
     
-    const browser = await puppeteer.launch({
-      headless: isFly || isCI ? true : false,
-      executablePath: '/usr/bin/google-chrome-stable',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-extensions',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-features=TranslateUI',
-        '--disable-ipc-flooding-protection'
-      ]
-    });
+    console.log('Puppeteer起動開始...');
+    const browser = await Promise.race([
+      puppeteer.launch({
+        headless: isFly || isCI ? true : false,
+        executablePath: '/usr/bin/google-chrome-stable',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--no-first-run',
+          '--disable-extensions',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--disable-features=TranslateUI',
+          '--disable-ipc-flooding-protection',
+          '--window-size=1280,800',
+          '--remote-debugging-port=9222',
+          '--disable-dev-tools',
+          '--disable-infobars',
+          '--disable-breakpad',
+          '--disable-client-side-phishing-detection',
+          '--disable-component-update',
+          '--disable-default-apps',
+          '--disable-domain-reliability',
+          '--disable-hang-monitor',
+          '--disable-popup-blocking',
+          '--disable-prompt-on-repost',
+          '--metrics-recording-only',
+          '--safebrowsing-disable-auto-update',
+          '--password-store=basic',
+          '--use-mock-keychain',
+          '--lang=ja-JP',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor'
+        ]
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Puppeteer起動タイムアウト（30秒）')), 30000)
+      )
+    ]);
+    console.log('Puppeteer起動完了');
     const page = await browser.newPage();
     // noteにログイン
     await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
@@ -512,31 +541,60 @@ module.exports.main = async function() {
     console.log('note.comに下書き保存処理を開始します...');
     
     // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
+    // 注意: Puppeteerは必須機能のため無効化しない
+    console.log('=== Fly.io環境でのPuppeteer起動 ===');
+    
+    // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
     const isFly = !!process.env.FLY_APP_NAME;
     const isCI = process.env.CI === 'true';
     console.log('process.env.CIの値:', process.env.CI);
     console.log('isCI:', isCI);
     console.log('isFly:', isFly);
     
-    const browser = await puppeteer.launch({
-      headless: isFly || isCI ? true : false,
-      executablePath: '/usr/bin/google-chrome-stable',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-extensions',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-features=TranslateUI',
-        '--disable-ipc-flooding-protection'
-      ]
-    });
+    console.log('Puppeteer起動開始...');
+    const browser = await Promise.race([
+      puppeteer.launch({
+        headless: isFly || isCI ? true : false,
+        executablePath: '/usr/bin/google-chrome-stable',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--no-first-run',
+          '--disable-extensions',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--disable-features=TranslateUI',
+          '--disable-ipc-flooding-protection',
+          '--window-size=1280,800',
+          '--remote-debugging-port=9222',
+          '--disable-dev-tools',
+          '--disable-infobars',
+          '--disable-breakpad',
+          '--disable-client-side-phishing-detection',
+          '--disable-component-update',
+          '--disable-default-apps',
+          '--disable-domain-reliability',
+          '--disable-hang-monitor',
+          '--disable-popup-blocking',
+          '--disable-prompt-on-repost',
+          '--metrics-recording-only',
+          '--safebrowsing-disable-auto-update',
+          '--password-store=basic',
+          '--use-mock-keychain',
+          '--lang=ja-JP',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor'
+        ]
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Puppeteer起動タイムアウト（30秒）')), 30000)
+      )
+    ]);
+    console.log('Puppeteer起動完了');
     const page = await browser.newPage();
     // noteにログイン
     await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);

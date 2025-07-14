@@ -214,12 +214,27 @@ exports.dragAndDropToAddButton = dragAndDropToAddButton;
 // ログイン処理
 async function login(page, email, password) {
   console.log('noteログインページへ遷移します');
-  await page.goto('https://note.com/login?redirectPath=https%3A%2F%2Fnote.com%2F', { waitUntil: 'networkidle2' });
+  
+  // ページのタイムアウト設定を延長
+  page.setDefaultNavigationTimeout(60000); // 60秒
+  page.setDefaultTimeout(60000); // 60秒
+  
+  await page.goto('https://note.com/login?redirectPath=https%3A%2F%2Fnote.com%2F', { 
+    waitUntil: 'networkidle2',
+    timeout: 60000 
+  });
   console.log('メールアドレスとパスワードを入力します');
+  
+  // 入力前に少し待機
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
   await page.type('#email', email);
   await page.type('#password', password);
-  await page.waitForSelector('button[type="button"]:not([disabled])');
+  
+  // ログインボタンが有効になるまで待機
+  await page.waitForSelector('button[type="button"]:not([disabled])', { timeout: 60000 });
   console.log('ログインボタンを探します');
+  
   const buttons = await page.$$('button[type="button"]');
   for (const btn of buttons) {
     const text = await (await btn.getProperty('innerText')).jsonValue();
@@ -229,7 +244,12 @@ async function login(page, email, password) {
       break;
     }
   }
-  await page.waitForNavigation();
+  
+  // ナビゲーション完了まで待機（タイムアウト延長）
+  await page.waitForNavigation({ 
+    waitUntil: 'networkidle2',
+    timeout: 60000 
+  });
   console.log('ログイン完了');
   // ログイン後のURLとタイトルを出力
   console.log('ログイン後の現在のURL:', await page.url());

@@ -16,27 +16,81 @@ function logTime(label) {
 
 (async () => {
   logTime('Puppeteer起動オプションを取得します');
+  // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
+  const isFly = !!process.env.FLY_APP_NAME;
   const isCI = process.env.CI === 'true';
   console.log('process.env.CIの値:', process.env.CI);
   console.log('isCI:', isCI);
+  console.log('isFly:', isFly);
+  
+  // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
+  // 注意: Puppeteerは必須機能のため無効化しない
+  console.log('=== Fly.io環境でのPuppeteer起動 ===');
+  
   logTime('puppeteer.launch 開始');
-  // 実行環境によってheadlessモードを切り替え
-  const isCloud = process.env.RENDER || process.env.CI === 'true'; // RenderやCI環境ならtrue
-  // const isCI = process.env.CI === 'true'; // ←CI(GitHub Actions等)専用の分岐に戻したい場合はこちらを有効化
-  // ※CI用に戻す場合はisCloudの代わりにisCIを使ってください
   const browser = await puppeteer.launch({
-    headless: isCloud ? true : false, // クラウドではtrue、ローカルではfalse
+    headless: isFly || isCI ? true : false,
+    executablePath: '/usr/bin/google-chrome-stable',
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
-      '--disable-gpu',
       '--disable-dev-shm-usage',
-      '--window-size=1280,900'
-    ],
-    // Renderなどクラウド環境でchromeのパスを明示的に指定
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+      '--disable-gpu',
+      '--disable-software-rasterizer',
+      '--no-first-run',
+      '--disable-extensions',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      '--disable-features=TranslateUI',
+      '--disable-ipc-flooding-protection',
+      '--window-size=1280,800',
+      '--remote-debugging-port=9222',
+      '--disable-dev-tools',
+      '--disable-infobars',
+      '--disable-breakpad',
+      '--disable-client-side-phishing-detection',
+      '--disable-component-update',
+      '--disable-default-apps',
+      '--disable-domain-reliability',
+      '--disable-hang-monitor',
+      '--disable-popup-blocking',
+      '--disable-prompt-on-repost',
+      '--metrics-recording-only',
+      '--safebrowsing-disable-auto-update',
+      '--password-store=basic',
+      '--use-mock-keychain',
+      '--lang=ja-JP',
+      '--disable-web-security',
+      '--disable-features=VizDisplayCompositor'
+    ]
   });
   logTime('puppeteer.launch 完了');
+  
+  logTime('新規ページ作成開始');
+  const page = await browser.newPage();
+  logTime('puppeteer.launch 開始');
+  const browser = await puppeteer.launch({
+    headless: isFly || isCI ? true : false,
+    executablePath: '/usr/bin/google-chrome-stable',
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-extensions',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      '--disable-features=TranslateUI',
+      '--disable-ipc-flooding-protection'
+    ]
+  });
+  logTime('puppeteer.launch 完了');
+  
   logTime('新規ページ作成開始');
   const page = await browser.newPage();
 
@@ -59,9 +113,11 @@ function logTime(label) {
 
   logTime('新規ページ作成完了');
 
+  /*
   logTime('noteにログイン開始');
   await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
   logTime('noteログイン完了');
+  */
 
   // ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
   // はじめてのnoteのページ
@@ -133,6 +189,7 @@ function logTime(label) {
 
   // ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
+  /*
   logTime('対象ページへ遷移開始');
   await page.goto(targetUrl, { waitUntil: 'networkidle2' });
   logTime('対象ページ遷移完了');
@@ -147,6 +204,7 @@ function logTime(label) {
     await new Promise(resolve => setTimeout(resolve, 1500));
   }
   logTime('記事一覧ページでスクロール完了');
+  */
 
   // クリエイターリンクの取得セレクターを指定
   let creatorLinkTargetSelector
