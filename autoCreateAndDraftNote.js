@@ -419,7 +419,7 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   try {
     console.log('note.comに下書き保存処理を開始します...');
     
-    // Fly.io環境でのPuppeteer起動オプション（Will Schenkの記事を参考）
+    // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
     const isFly = !!process.env.FLY_APP_NAME;
     const isCI = process.env.CI === 'true';
     console.log('process.env.CIの値:', process.env.CI);
@@ -427,7 +427,7 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
     console.log('isFly:', isFly);
     
     const browser = await puppeteer.launch({
-      headless: true,
+      headless: isFly || isCI ? true : false,
       executablePath: '/usr/bin/google-chrome-stable',
       args: [
         '--no-sandbox',
@@ -437,7 +437,12 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
         '--no-first-run',
         '--no-zygote',
         '--single-process',
-        '--disable-extensions'
+        '--disable-extensions',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection'
       ]
     });
     const page = await browser.newPage();
@@ -506,7 +511,7 @@ module.exports.main = async function() {
   try {
     console.log('note.comに下書き保存処理を開始します...');
     
-    // Fly.io環境でのPuppeteer起動オプション（Will Schenkの記事を参考）
+    // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
     const isFly = !!process.env.FLY_APP_NAME;
     const isCI = process.env.CI === 'true';
     console.log('process.env.CIの値:', process.env.CI);
@@ -514,7 +519,7 @@ module.exports.main = async function() {
     console.log('isFly:', isFly);
     
     const browser = await puppeteer.launch({
-      headless: true,
+      headless: isFly || isCI ? true : false,
       executablePath: '/usr/bin/google-chrome-stable',
       args: [
         '--no-sandbox',
@@ -524,7 +529,12 @@ module.exports.main = async function() {
         '--no-first-run',
         '--no-zygote',
         '--single-process',
-        '--disable-extensions'
+        '--disable-extensions',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection'
       ]
     });
     const page = await browser.newPage();
