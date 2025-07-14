@@ -419,29 +419,20 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   try {
     console.log('note.comに下書き保存処理を開始します...');
     
-    // Fly.io環境でのPuppeteer起動オプション
+    // Fly.io環境でのPuppeteer起動オプション（最新の成功例に基づく）
     const browser = await puppeteer.launch({
-      headless: 'new', // Fly.io環境では'new'モードを使用
+      headless: true,
+      executablePath: process.env.CHROME_EXECUTABLE_PATH || '/usr/bin/chromium',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-gpu',
         '--disable-dev-shm-usage',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--disable-extensions',
-        '--disable-plugins',
-        '--disable-images',
-        '--disable-javascript',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-field-trial-config',
-        '--disable-ipc-flooding-protection',
-        '--window-size=1280,900'
-      ],
-      // Fly.io環境での実行パスを固定
-      executablePath: '/usr/bin/chromium-browser'
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-extensions'
+      ]
     });
     const page = await browser.newPage();
     // noteにログイン
@@ -509,29 +500,20 @@ module.exports.main = async function() {
   try {
     console.log('note.comに下書き保存処理を開始します...');
     
-    // Fly.io環境でのPuppeteer起動オプション
+    // Fly.io環境でのPuppeteer起動オプション（最新の成功例に基づく）
     const browser = await puppeteer.launch({
-      headless: 'new', // Fly.io環境では'new'モードを使用
+      headless: true,
+      executablePath: process.env.CHROME_EXECUTABLE_PATH || '/usr/bin/chromium',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-gpu',
         '--disable-dev-shm-usage',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--disable-extensions',
-        '--disable-plugins',
-        '--disable-images',
-        '--disable-javascript',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-field-trial-config',
-        '--disable-ipc-flooding-protection',
-        '--window-size=1280,900'
-      ],
-      // Fly.io環境での実行パスを固定
-      executablePath: '/usr/bin/chromium-browser'
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-extensions'
+      ]
     });
     const page = await browser.newPage();
     // noteにログイン

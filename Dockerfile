@@ -1,5 +1,5 @@
-# Fly.io用のDockerfile
-FROM node:18-alpine
+# Fly.io用のDockerfile - Puppeteer対応版
+FROM node:18-slim
 
 # 作業ディレクトリを設定
 WORKDIR /app
@@ -13,23 +13,17 @@ RUN npm ci --only=production
 # アプリケーションのソースコードをコピー
 COPY . .
 
-# Puppeteerの依存関係をインストール
-RUN apk add --no-cache \
+# Puppeteerの依存関係をインストール（最新の成功例に基づく）
+RUN apt-get update && apt-get install -y \
     chromium \
-    nss \
-    freetype \
-    freetype-dev \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    dbus \
-    xvfb \
-    x11vnc \
-    fluxbox
+    fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 # Puppeteerの環境変数を設定
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+    PUPPETEER_SKIP_DOWNLOAD=true \
+    CHROME_EXECUTABLE_PATH="/usr/bin/chromium"
 
 # ポート8080を公開
 EXPOSE 8080
