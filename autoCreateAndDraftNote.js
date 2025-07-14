@@ -419,20 +419,50 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   try {
     console.log('note.comに下書き保存処理を開始します...');
     
-    // Fly.io環境でのPuppeteer起動オプション（最新の成功例に基づく）
+    // Fly.io環境でのPuppeteer起動オプション（noteAutoDraftAndSheetUpdate.jsの設定を参考）
+    const isFly = !!process.env.FLY_APP_NAME;
+    const isCI = process.env.CI === 'true';
+    console.log('process.env.CIの値:', process.env.CI);
+    console.log('isCI:', isCI);
+    console.log('isFly:', isFly);
+    
     const browser = await puppeteer.launch({
-      headless: true,
-      executablePath: process.env.CHROME_EXECUTABLE_PATH || '/usr/bin/chromium',
+      headless: isFly || isCI ? true : false,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
         '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
         '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-default-apps',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--mute-audio',
         '--no-zygote',
         '--single-process',
-        '--disable-extensions'
-      ]
+        '--disable-background-networking',
+        '--safebrowsing-disable-auto-update',
+        '--ignore-certificate-errors',
+        '--ignore-ssl-errors',
+        '--ignore-certificate-errors-spki-list',
+        '--user-data-dir=/tmp/chrome-user-data',
+        '--data-path=/tmp/chrome-data-path',
+        '--homedir=/tmp',
+        '--disk-cache-dir=/tmp/chrome-cache-dir'
+      ],
+      defaultViewport: null
     });
     const page = await browser.newPage();
     // noteにログイン
@@ -500,20 +530,50 @@ module.exports.main = async function() {
   try {
     console.log('note.comに下書き保存処理を開始します...');
     
-    // Fly.io環境でのPuppeteer起動オプション（最新の成功例に基づく）
+    // Fly.io環境でのPuppeteer起動オプション（noteAutoDraftAndSheetUpdate.jsの設定を参考）
+    const isFly = !!process.env.FLY_APP_NAME;
+    const isCI = process.env.CI === 'true';
+    console.log('process.env.CIの値:', process.env.CI);
+    console.log('isCI:', isCI);
+    console.log('isFly:', isFly);
+    
     const browser = await puppeteer.launch({
-      headless: true,
-      executablePath: process.env.CHROME_EXECUTABLE_PATH || '/usr/bin/chromium',
+      headless: isFly || isCI ? true : false,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
         '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
         '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-default-apps',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--mute-audio',
         '--no-zygote',
         '--single-process',
-        '--disable-extensions'
-      ]
+        '--disable-background-networking',
+        '--safebrowsing-disable-auto-update',
+        '--ignore-certificate-errors',
+        '--ignore-ssl-errors',
+        '--ignore-certificate-errors-spki-list',
+        '--user-data-dir=/tmp/chrome-user-data',
+        '--data-path=/tmp/chrome-data-path',
+        '--homedir=/tmp',
+        '--disk-cache-dir=/tmp/chrome-cache-dir'
+      ],
+      defaultViewport: null
     });
     const page = await browser.newPage();
     // noteにログイン
