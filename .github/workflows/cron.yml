@@ -1,0 +1,36 @@
+name: Note投資管理自動化
+
+on:
+  schedule:
+    # 毎日9:00に実行
+    - cron: '0 9 * * *'
+  workflow_dispatch: # 手動実行も可能
+
+jobs:
+  auto-note:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Run Auto Note
+      env:
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        NOTE_EMAIL: ${{ secrets.NOTE_EMAIL }}
+        NOTE_PASSWORD: ${{ secrets.NOTE_PASSWORD }}
+      run: node autoCreateAndDraftNote.js
+      
+    - name: Call Vercel API
+      run: |
+        curl -X POST https://note-investment-management-d65pker21-aa0921s-projects.vercel.app/api/public-cron \
+          -H "Content-Type: application/json" \
+          -H "User-Agent: GitHub-Actions/1.0" 
