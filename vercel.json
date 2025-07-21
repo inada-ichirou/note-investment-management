@@ -7,12 +7,10 @@
       "maxDuration": 300
     },
     "api/public-cron.js": {
-      "maxDuration": 300,
-      "protection": false
+      "maxDuration": 300
     },
     "api/test.js": {
-      "maxDuration": 300,
-      "protection": false
+      "maxDuration": 300
     }
   },
   "rewrites": [
