@@ -17,6 +17,9 @@
     },
     "api/lightweight-cron.js": {
       "maxDuration": 300
+    },
+    "api/simple-cron.js": {
+      "maxDuration": 300
     }
   },
   "rewrites": [

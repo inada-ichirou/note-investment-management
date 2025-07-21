@@ -23,18 +23,18 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://note-investment-management.vercel.app',
-        'X-Title': 'Note投資管理自動化'
+        'X-Title': 'Note Investment Management'
       },
       body: JSON.stringify({
         model: 'anthropic/claude-3.5-sonnet',
         messages: [
           {
             role: 'system',
-            content: 'あなたは投資に関する記事を書く専門家です。毎日、投資に関する有益な情報を提供する記事を作成してください。'
+            content: 'You are an expert in writing investment articles. Create daily articles with useful investment information. Please respond in English.'
           },
           {
             role: 'user',
-            content: `今日の投資に関する記事を作成してください。タイトルと本文を含めてください。現在の日時: ${new Date().toISOString()}`
+            content: `Create today's investment article. Include a title and content. Current date: ${new Date().toISOString()}`
           }
         ],
         max_tokens: 1000,
@@ -43,7 +43,8 @@ export default async function handler(req, res) {
     });
 
     if (!openRouterResponse.ok) {
-      throw new Error(`OpenRouter API エラー: ${openRouterResponse.status}`);
+      const errorText = await openRouterResponse.text();
+      throw new Error(`OpenRouter API エラー: ${openRouterResponse.status} - ${errorText}`);
     }
 
     const openRouterData = await openRouterResponse.json();
@@ -57,8 +58,8 @@ export default async function handler(req, res) {
     let content = '';
 
     for (const line of lines) {
-      if (line.includes('タイトル') || line.includes('Title')) {
-        title = line.replace(/.*[:：]\s*/, '').trim();
+      if (line.toLowerCase().includes('title') || line.includes('タイトル')) {
+        title = line.replace(/.*[:：]\s*/i, '').trim();
       } else if (line.trim() && !line.startsWith('#')) {
         content += line + '\n';
       }
@@ -66,7 +67,7 @@ export default async function handler(req, res) {
 
     // デフォルトタイトル
     if (!title) {
-      title = `投資情報 - ${new Date().toLocaleDateString('ja-JP')}`;
+      title = `Investment Information - ${new Date().toLocaleDateString('en-US')}`;
     }
 
     // デフォルトコンテンツ
@@ -76,7 +77,7 @@ export default async function handler(req, res) {
 
     const result = {
       success: true,
-      message: '軽量cron実行完了',
+      message: 'Lightweight cron execution completed',
       timestamp: new Date().toISOString(),
       method: req.method,
       title: title,

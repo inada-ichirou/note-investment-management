@@ -41,6 +41,12 @@
         .button.lightweight:hover {
             background: #059669;
         }
+        .button.simple {
+            background: #8b5cf6;
+        }
+        .button.simple:hover {
+            background: #7c3aed;
+        }
         .result {
             margin: 20px 0;
             padding: 15px;
@@ -93,6 +99,7 @@
         <button class="button" onclick="testAPI('test')">Test API (最もシンプル)</button>
         <button class="button" onclick="testAPI('public-cron')">Public Cron API</button>
         <button class="button" onclick="testAPI('health')">Health Check</button>
+        <button class="button simple" onclick="testAPI('simple-cron')">Simple Cron API</button>
         <button class="button lightweight" onclick="testAPI('lightweight-cron')">Lightweight Cron API</button>
         <button class="button puppeteer" onclick="testAPI('puppeteer-cron')">Puppeteer Cron API</button>
         
@@ -101,8 +108,8 @@
 
     <div class="section">
         <h2>cron-job.org 設定</h2>
-        <p><strong>推奨URL (軽量版):</strong></p>
-        <div class="url" id="lightweightUrl"></div>
+        <p><strong>推奨URL (Simple版):</strong></p>
+        <div class="url" id="simpleUrl"></div>
         
         <p><strong>設定手順:</strong></p>
         <ol>
@@ -124,9 +131,14 @@
                 <th style="border: 1px solid #ddd; padding: 8px;">推奨度</th>
             </tr>
             <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;"><strong>Simple Cron</strong></td>
+                <td style="border: 1px solid #ddd; padding: 8px;">最もシンプル、確実に動作、テスト用</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">⭐⭐⭐⭐⭐</td>
+            </tr>
+            <tr>
                 <td style="border: 1px solid #ddd; padding: 8px;"><strong>Lightweight Cron</strong></td>
                 <td style="border: 1px solid #ddd; padding: 8px;">OpenRouter APIで記事生成、軽量、高速</td>
-                <td style="border: 1px solid #ddd; padding: 8px;">⭐⭐⭐⭐⭐</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">⭐⭐⭐⭐</td>
             </tr>
             <tr>
                 <td style="border: 1px solid #ddd; padding: 8px;"><strong>Puppeteer Cron</strong></td>
@@ -139,7 +151,7 @@
     <script>
         // 現在のURLを取得
         const baseUrl = window.location.origin;
-        document.getElementById('lightweightUrl').textContent = baseUrl + '/api/lightweight-cron';
+        document.getElementById('simpleUrl').textContent = baseUrl + '/api/simple-cron';
         
         async function testAPI(endpoint) {
             const resultDiv = document.getElementById('result');
