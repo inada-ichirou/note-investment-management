@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Note投資管理自動化ツール</title>
+    <title>Note投資管理自動化</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -12,67 +12,109 @@
             padding: 20px;
             line-height: 1.6;
         }
-        .container {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        button {
+        .button {
             background: #0070f3;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
+            padding: 12px 24px;
+            border-radius: 6px;
             cursor: pointer;
-            margin: 5px;
+            margin: 10px 5px;
+            font-size: 14px;
         }
-        button:hover {
+        .button:hover {
             background: #0051cc;
         }
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
         .result {
-            background: #e8f5e8;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 6px;
             white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            color: #0c4a6e;
         }
         .error {
-            background: #ffe8e8;
-            color: #d32f2f;
+            background: #fef2f2;
+            border: 1px solid #ef4444;
+            color: #7f1d1d;
+        }
+        .loading {
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            color: #374151;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        h1, h2 {
+            color: #111827;
+        }
+        .url {
+            background: #f3f4f6;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
         }
     </style>
 </head>
 <body>
-    <h1>Note投資管理自動化ツール</h1>
+    <h1>Note投資管理自動化</h1>
     
-    <div class="container">
+    <div class="section">
         <h2>API テスト</h2>
-        <p>以下のボタンをクリックしてAPIエンドポイントをテストできます。</p>
+        <p>以下のボタンでAPIエンドポイントをテストできます：</p>
         
-        <button onclick="testCron()">Cron API テスト</button>
-        <button onclick="testPublicCron()">Public Cron API テスト</button>
-        <button onclick="testHealth()">ヘルスチェック</button>
+        <button class="button" onclick="testAPI('test')">Test API (最もシンプル)</button>
+        <button class="button" onclick="testAPI('public-cron')">Public Cron API</button>
+        <button class="button" onclick="testAPI('health')">Health Check</button>
         
-        <div id="result"></div>
+        <div id="result" class="result" style="display: none;"></div>
     </div>
 
-    <div class="container">
-        <h2>定期実行設定</h2>
-        <p><strong>cron-job.org</strong> で以下のURLを設定してください：</p>
-        <code>https://note-investment-management-88regg3ou-aa0921s-projects.vercel.app/api/public-cron</code>
-        <p>Method: POST</p>
-        <p><small>※ 認証不要の公開エンドポイントです</small></p>
+    <div class="section">
+        <h2>cron-job.org 設定</h2>
+        <p><strong>URL:</strong></p>
+        <div class="url" id="cronUrl"></div>
+        
+        <p><strong>設定手順:</strong></p>
+        <ol>
+            <li>cron-job.orgで新しいcronjobを作成</li>
+            <li>上記のURLを設定</li>
+            <li>Method: GET または POST</li>
+            <li>認証: OFF</li>
+            <li>Headers: なし</li>
+            <li>実行スケジュール: 毎日9:00など</li>
+        </ol>
     </div>
 
     <script>
-        async function testCron() {
+        // 現在のURLを取得
+        const baseUrl = window.location.origin;
+        document.getElementById('cronUrl').textContent = baseUrl + '/api/public-cron';
+        
+        async function testAPI(endpoint) {
             const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '実行中...';
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = 'テスト中...';
             
             try {
-                const response = await fetch('/api/cron', {
-                    method: 'POST',
+                const response = await fetch(`${baseUrl}/api/${endpoint}`, {
+                    method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -80,55 +122,12 @@
                 
                 const data = await response.text();
                 
-                if (response.ok) {
-                    resultDiv.innerHTML = `<div class="result">✅ 成功: ${data}</div>`;
-                } else {
-                    resultDiv.innerHTML = `<div class="result error">❌ エラー (${response.status}): ${data}</div>`;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<div class="result error">❌ ネットワークエラー: ${error.message}</div>`;
-            }
-        }
-        
-        async function testPublicCron() {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = 'Public Cron API テスト中...';
-            
-            try {
-                const response = await fetch('/api/public-cron', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                resultDiv.textContent = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${data}`;
                 
-                const data = await response.text();
-                
-                if (response.ok) {
-                    resultDiv.innerHTML = `<div class="result">✅ Public Cron API 成功: ${data}</div>`;
-                } else {
-                    resultDiv.innerHTML = `<div class="result error">❌ Public Cron API 失敗 (${response.status}): ${data}</div>`;
-                }
             } catch (error) {
-                resultDiv.innerHTML = `<div class="result error">❌ ネットワークエラー: ${error.message}</div>`;
-            }
-        }
-        
-        async function testHealth() {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = 'ヘルスチェック中...';
-            
-            try {
-                const response = await fetch('/api/health');
-                const data = await response.text();
-                
-                if (response.ok) {
-                    resultDiv.innerHTML = `<div class="result">✅ ヘルスチェック成功: ${data}</div>`;
-                } else {
-                    resultDiv.innerHTML = `<div class="result error">❌ ヘルスチェック失敗 (${response.status}): ${data}</div>`;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<div class="result error">❌ ネットワークエラー: ${error.message}</div>`;
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Error: ${error.message}`;
             }
         }
     </script>

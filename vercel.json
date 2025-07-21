@@ -29,9 +29,5 @@
         }
       ]
     }
-  ],
-  "protectionBypass": {
-    "api/test.js": "public",
-    "api/public-cron.js": "public"
-  }
+  ]
 }
