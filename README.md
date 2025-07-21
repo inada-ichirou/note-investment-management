@@ -94,10 +94,36 @@ npm run like
 npm run publish
 ```
 
+## 環境変数設定
+
+### 必要な環境変数
+
+1. **OPENROUTER_API_KEY**: OpenRouter APIのキー
+2. **NOTE_EMAIL**: Note.comのメールアドレス
+3. **NOTE_PASSWORD**: Note.comのパスワード
+4. **CRON_SECRET**: 定期実行用の認証シークレット
+
+### Vercelでの設定方法
+
+1. Vercelダッシュボードにアクセス
+2. プロジェクト設定 → Environment Variables
+3. 上記の環境変数を追加
+
+### ローカル開発
+
+`.env`ファイルを作成して環境変数を設定：
+
+```bash
+OPENROUTER_API_KEY=your_api_key_here
+NOTE_EMAIL=your_email@example.com
+NOTE_PASSWORD=your_password_here
+CRON_SECRET=your_secret_here
+```
+
 ## 注意事項
 
-- Fly.ioの無料枠では月間3つのアプリ、3GB RAMまで
-- クレジットカード登録が必要です
-- 環境変数は必ず設定してください
+- **重要**: 環境変数は絶対にGitHubにプッシュしないでください
+- `.env`ファイルは`.gitignore`に含まれています
+- Vercelの無料枠では月100GB-Hrsまで
 - Puppeteerの動作に時間がかかる場合があります
 - API制限に注意してください
