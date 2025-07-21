@@ -51,6 +51,7 @@
         <p>以下のボタンをクリックしてAPIエンドポイントをテストできます。</p>
         
         <button onclick="testCron()">Cron API テスト</button>
+        <button onclick="testPublicCron()">Public Cron API テスト</button>
         <button onclick="testHealth()">ヘルスチェック</button>
         
         <div id="result"></div>
@@ -59,8 +60,9 @@
     <div class="container">
         <h2>定期実行設定</h2>
         <p><strong>cron-job.org</strong> で以下のURLを設定してください：</p>
-        <code>https://note-investment-management-b3fojys0w-aa0921s-projects.vercel.app/api/cron</code>
+        <code>https://note-investment-management-88regg3ou-aa0921s-projects.vercel.app/api/public-cron</code>
         <p>Method: POST</p>
+        <p><small>※ 認証不要の公開エンドポイントです</small></p>
     </div>
 
     <script>
@@ -82,6 +84,30 @@
                     resultDiv.innerHTML = `<div class="result">✅ 成功: ${data}</div>`;
                 } else {
                     resultDiv.innerHTML = `<div class="result error">❌ エラー (${response.status}): ${data}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ ネットワークエラー: ${error.message}</div>`;
+            }
+        }
+        
+        async function testPublicCron() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Public Cron API テスト中...';
+            
+            try {
+                const response = await fetch('/api/public-cron', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.text();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="result">✅ Public Cron API 成功: ${data}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ Public Cron API 失敗 (${response.status}): ${data}</div>`;
                 }
             } catch (error) {
                 resultDiv.innerHTML = `<div class="result error">❌ ネットワークエラー: ${error.message}</div>`;
