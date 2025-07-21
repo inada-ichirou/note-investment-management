@@ -10,7 +10,7 @@
     "follow": "node follow/followFromArticles.js",
     "like": "node likeUnlikedNotes.js",
     "publish": "node autoPublishNotes.js",
-    "vercel-build": "echo 'Vercel build completed'",
+    "vercel-build": "npx puppeteer browsers install chrome && echo 'Vercel build completed'",
     "vercel-dev": "node api.js"
   },
   "dependencies": {
@@ -23,5 +23,5 @@
   "engines": {
     "node": "22.x"
   },
-  "puppeteer_skip_chromium_download": "true"
+  "puppeteer_skip_chromium_download": "false"
 }

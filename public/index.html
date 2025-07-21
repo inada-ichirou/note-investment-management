@@ -35,6 +35,12 @@
         .button.puppeteer:hover {
             background: #e55a2b;
         }
+        .button.lightweight {
+            background: #10b981;
+        }
+        .button.lightweight:hover {
+            background: #059669;
+        }
         .result {
             margin: 20px 0;
             padding: 15px;
@@ -87,6 +93,7 @@
         <button class="button" onclick="testAPI('test')">Test API (最もシンプル)</button>
         <button class="button" onclick="testAPI('public-cron')">Public Cron API</button>
         <button class="button" onclick="testAPI('health')">Health Check</button>
+        <button class="button lightweight" onclick="testAPI('lightweight-cron')">Lightweight Cron API</button>
         <button class="button puppeteer" onclick="testAPI('puppeteer-cron')">Puppeteer Cron API</button>
         
         <div id="result" class="result" style="display: none;"></div>
@@ -94,8 +101,8 @@
 
     <div class="section">
         <h2>cron-job.org 設定</h2>
-        <p><strong>URL:</strong></p>
-        <div class="url" id="cronUrl"></div>
+        <p><strong>推奨URL (軽量版):</strong></p>
+        <div class="url" id="lightweightUrl"></div>
         
         <p><strong>設定手順:</strong></p>
         <ol>
@@ -109,22 +116,30 @@
     </div>
 
     <div class="section">
-        <h2>Puppeteer on Vercel</h2>
-        <p>Vercel上でPuppeteerを直接動作させる新しいアプローチです：</p>
-        <ul>
-            <li>外部cronサービス不要</li>
-            <li>Vercel内で完結</li>
-            <li>Puppeteerが直接note.comを操作</li>
-        </ul>
-        <p><strong>Puppeteer Cron URL:</strong></p>
-        <div class="url" id="puppeteerUrl"></div>
+        <h2>アプローチ比較</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <th style="border: 1px solid #ddd; padding: 8px;">アプローチ</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">特徴</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">推奨度</th>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;"><strong>Lightweight Cron</strong></td>
+                <td style="border: 1px solid #ddd; padding: 8px;">OpenRouter APIで記事生成、軽量、高速</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">⭐⭐⭐⭐⭐</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;"><strong>Puppeteer Cron</strong></td>
+                <td style="border: 1px solid #ddd; padding: 8px;">note.comを直接操作、重い、不安定</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">⭐⭐</td>
+            </tr>
+        </table>
     </div>
 
     <script>
         // 現在のURLを取得
         const baseUrl = window.location.origin;
-        document.getElementById('cronUrl').textContent = baseUrl + '/api/public-cron';
-        document.getElementById('puppeteerUrl').textContent = baseUrl + '/api/puppeteer-cron';
+        document.getElementById('lightweightUrl').textContent = baseUrl + '/api/lightweight-cron';
         
         async function testAPI(endpoint) {
             const resultDiv = document.getElementById('result');
