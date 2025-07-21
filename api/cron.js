@@ -34,39 +34,22 @@ export default async function handler(req, res) {
 }
 
 async function executeAutoNote() {
-  // autoCreateAndDraftNote.jsの主要ロジックをここに統合
-  const puppeteer = require('puppeteer');
+  // テスト用：Puppeteerを使わずに環境変数チェックのみ
+  console.log('環境変数チェック:');
+  console.log('- OPENROUTER_API_KEY:', process.env.OPENROUTER_API_KEY ? '設定済み' : '未設定');
+  console.log('- NOTE_EMAIL:', process.env.NOTE_EMAIL ? '設定済み' : '未設定');
+  console.log('- NOTE_PASSWORD:', process.env.NOTE_PASSWORD ? '設定済み' : '未設定');
   
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process',
-      '--disable-gpu'
-    ]
-  });
-  
-  try {
-    const page = await browser.newPage();
-    
-    // note.comにログイン
-    await page.goto('https://note.com/login');
-    await page.type('input[name="email"]', process.env.NOTE_EMAIL);
-    await page.type('input[name="password"]', process.env.NOTE_PASSWORD);
-    await page.click('button[type="submit"]');
-    await page.waitForNavigation();
-    
-    // 記事作成処理
-    // ... 既存のロジック
-    
-    return { status: 'success', message: '記事作成完了' };
-    
-  } finally {
-    await browser.close();
+  // 環境変数が設定されているかチェック
+  if (!process.env.OPENROUTER_API_KEY || !process.env.NOTE_EMAIL || !process.env.NOTE_PASSWORD) {
+    throw new Error('必要な環境変数が設定されていません');
   }
+  
+  // テスト用のレスポンス
+  return { 
+    status: 'success', 
+    message: 'API接続テスト完了',
+    timestamp: new Date().toISOString(),
+    environment: 'Vercel Functions'
+  };
 } 
