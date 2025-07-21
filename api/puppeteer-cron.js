@@ -1,5 +1,5 @@
 // Puppeteerを使用したVercel関数
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
 
 export default async function handler(req, res) {
   // GETとPOSTリクエストを許可
@@ -18,29 +18,79 @@ export default async function handler(req, res) {
       throw new Error('必要な環境変数が設定されていません');
     }
 
-    // Puppeteer起動オプション（Vercel用）
-    const launchOptions = {
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-features=TranslateUI',
-        '--disable-ipc-flooding-protection'
-      ],
-      executablePath: process.env.CHROME_BIN || '/usr/bin/google-chrome-stable'
-    };
+    // Vercel環境でのChrome実行パスを設定
+    const chromePaths = [
+      '/usr/bin/google-chrome-stable',
+      '/usr/bin/google-chrome',
+      '/usr/bin/chromium-browser',
+      '/usr/bin/chromium',
+      process.env.CHROME_BIN
+    ].filter(Boolean);
 
-    console.log('Puppeteer起動中...');
-    browser = await puppeteer.launch(launchOptions);
+    let executablePath = null;
+    
+    // 利用可能なChromeパスを探す
+    for (const path of chromePaths) {
+      try {
+        const { execSync } = await import('child_process');
+        execSync(`which ${path}`, { stdio: 'ignore' });
+        executablePath = path;
+        console.log(`Chrome found at: ${path}`);
+        break;
+      } catch (e) {
+        console.log(`Chrome not found at: ${path}`);
+      }
+    }
+
+    if (!executablePath) {
+      // Chromeが見つからない場合は、Puppeteerの組み込みChromeを使用
+      console.log('Chrome not found, using Puppeteer bundled Chrome');
+      const puppeteerFull = await import('puppeteer');
+      browser = await puppeteerFull.default.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--disable-features=TranslateUI',
+          '--disable-ipc-flooding-protection',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor'
+        ]
+      });
+    } else {
+      // 見つかったChromeパスを使用
+      console.log(`Using Chrome at: ${executablePath}`);
+      browser = await puppeteer.launch({
+        headless: true,
+        executablePath,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--disable-features=TranslateUI',
+          '--disable-ipc-flooding-protection',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor'
+        ]
+      });
+    }
     
     const page = await browser.newPage();
     
@@ -112,7 +162,8 @@ export default async function handler(req, res) {
       timestamp: new Date().toISOString(),
       method: req.method,
       title: testTitle,
-      environment: 'Vercel Functions with Puppeteer'
+      environment: 'Vercel Functions with Puppeteer',
+      chromePath: executablePath || 'bundled'
     };
     
     console.log('=== Puppeteer Cron 実行完了 ===');
