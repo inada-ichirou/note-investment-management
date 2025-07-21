@@ -1,12 +1,13 @@
 // 認証不要の公開cronエンドポイント
 export default async function handler(req, res) {
-  // POSTリクエストのみ許可
-  if (req.method !== 'POST') {
+  // GETとPOSTリクエストを許可
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
   
   try {
     console.log('=== Public Auto Note 実行開始 ===');
+    console.log('Method:', req.method);
     
     // 環境変数チェック
     if (!process.env.OPENROUTER_API_KEY || !process.env.NOTE_EMAIL || !process.env.NOTE_PASSWORD) {
@@ -21,6 +22,7 @@ export default async function handler(req, res) {
       success: true, 
       message: 'Public Auto Note 実行完了',
       timestamp: new Date().toISOString(),
+      method: req.method,
       result 
     });
     
