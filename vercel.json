@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/auto-note.js": {
+      "maxDuration": 300
+    }
+  }
+}
