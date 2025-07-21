@@ -20,6 +20,7 @@
     "dotenv": "^16.5.0"
   },
   "engines": {
-    "node": "18.x"
-  }
+    "node": "22.x"
+  },
+  "puppeteer_skip_chromium_download": "true"
 }

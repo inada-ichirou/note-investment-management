@@ -29,6 +29,12 @@
             background: #ccc;
             cursor: not-allowed;
         }
+        .button.puppeteer {
+            background: #ff6b35;
+        }
+        .button.puppeteer:hover {
+            background: #e55a2b;
+        }
         .result {
             margin: 20px 0;
             padding: 15px;
@@ -81,6 +87,7 @@
         <button class="button" onclick="testAPI('test')">Test API (最もシンプル)</button>
         <button class="button" onclick="testAPI('public-cron')">Public Cron API</button>
         <button class="button" onclick="testAPI('health')">Health Check</button>
+        <button class="button puppeteer" onclick="testAPI('puppeteer-cron')">Puppeteer Cron API</button>
         
         <div id="result" class="result" style="display: none;"></div>
     </div>
@@ -101,10 +108,23 @@
         </ol>
     </div>
 
+    <div class="section">
+        <h2>Puppeteer on Vercel</h2>
+        <p>Vercel上でPuppeteerを直接動作させる新しいアプローチです：</p>
+        <ul>
+            <li>外部cronサービス不要</li>
+            <li>Vercel内で完結</li>
+            <li>Puppeteerが直接note.comを操作</li>
+        </ul>
+        <p><strong>Puppeteer Cron URL:</strong></p>
+        <div class="url" id="puppeteerUrl"></div>
+    </div>
+
     <script>
         // 現在のURLを取得
         const baseUrl = window.location.origin;
         document.getElementById('cronUrl').textContent = baseUrl + '/api/public-cron';
+        document.getElementById('puppeteerUrl').textContent = baseUrl + '/api/puppeteer-cron';
         
         async function testAPI(endpoint) {
             const resultDiv = document.getElementById('result');

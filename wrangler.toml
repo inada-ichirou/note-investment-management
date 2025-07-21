@@ -1,0 +1,12 @@
+name = "note-investment-cron"
+main = "cloudflare-worker.js"
+compatibility_date = "2024-01-01"
+
+[triggers]
+crons = ["0 9 * * *"]  # 毎日9:00に実行
+
+[env.production]
+name = "note-investment-cron-prod"
+
+[env.staging]
+name = "note-investment-cron-staging" 
