@@ -8,6 +8,10 @@ export default async function handler(req, res) {
   try {
     console.log('=== Simple Cron 実行開始 ===');
     console.log('Method:', req.method);
+    console.log('User-Agent:', req.headers['user-agent']);
+    console.log('Referer:', req.headers['referer']);
+    console.log('X-Forwarded-For:', req.headers['x-forwarded-for']);
+    console.log('実行時刻:', new Date().toISOString());
     
     // 環境変数チェック
     if (!process.env.OPENROUTER_API_KEY) {
@@ -26,10 +30,14 @@ export default async function handler(req, res) {
       title: testTitle,
       content: testContent,
       environment: 'Vercel Functions (Simple)',
-      status: 'ready_for_cron_job'
+      status: 'ready_for_cron_job',
+      userAgent: req.headers['user-agent'],
+      referer: req.headers['referer'],
+      ip: req.headers['x-forwarded-for']
     };
 
     console.log('=== Simple Cron 実行完了 ===');
+    console.log('結果:', JSON.stringify(result, null, 2));
     res.status(200).json(result);
 
   } catch (error) {

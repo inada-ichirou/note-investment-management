@@ -20,6 +20,9 @@
     },
     "api/simple-cron.js": {
       "maxDuration": 300
+    },
+    "api/logs.js": {
+      "maxDuration": 300
     }
   },
   "rewrites": [
