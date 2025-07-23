@@ -3,22 +3,16 @@
     "api/auto-note.js": {
       "maxDuration": 300
     },
-    "api/cron.js": {
+    "api/follow-articles.js": {
       "maxDuration": 300
     },
-    "api/public-cron.js": {
+    "api/create-draft.js": {
       "maxDuration": 300
     },
-    "api/test.js": {
+    "api/publish-notes.js": {
       "maxDuration": 300
     },
-    "api/puppeteer-cron.js": {
-      "maxDuration": 300
-    },
-    "api/lightweight-cron.js": {
-      "maxDuration": 300
-    },
-    "api/simple-cron.js": {
+    "api/like-notes.js": {
       "maxDuration": 300
     },
     "api/logs.js": {
@@ -41,5 +35,8 @@
         }
       ]
     }
-  ]
+  ],
+  "protectionBypass": {
+    "api/*.js": true
+  }
 }
