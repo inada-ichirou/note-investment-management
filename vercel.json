@@ -35,8 +35,5 @@
         }
       ]
     }
-  ],
-  "protectionBypass": {
-    "api/*.js": true
-  }
+  ]
 }
