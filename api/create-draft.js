@@ -1,7 +1,7 @@
 // 記事を自動作成して下書きに追加するAPIエンドポイント
 import puppeteer from 'puppeteer-core';
 import fs from 'fs';
-import axios from 'axios';
+import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
   // GETとPOSTリクエストを許可
@@ -97,26 +97,29 @@ export default async function handler(req, res) {
 投資・資産運用の専門知識を活かして、価値のある記事を作成してください。
 `;
 
-      const response = await axios.post(API_URL, {
-        model: MODEL,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 4000,
-        temperature: 0.7
-      }, {
+      const response = await fetch(API_URL, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': 'https://note.com',
           'X-Title': 'Investment Management Bot'
-        }
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 4000,
+          temperature: 0.7
+        })
       });
 
-      return response.data.choices[0].message.content;
+      const data = await response.json();
+      return data.choices[0].message.content;
     }
 
     // 記事を生成
@@ -165,26 +168,29 @@ export default async function handler(req, res) {
 元の内容を大幅に変更せず、改善のみを行ってください。
 `;
 
-      const response = await axios.post(API_URL, {
-        model: MODEL,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 2000,
-        temperature: 0.5
-      }, {
+      const response = await fetch(API_URL, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': 'https://note.com',
           'X-Title': 'Investment Management Bot'
-        }
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 2000,
+          temperature: 0.5
+        })
       });
 
-      return response.data.choices[0].message.content;
+      const data = await response.json();
+      return data.choices[0].message.content;
     }
 
     // タグを生成
@@ -204,26 +210,29 @@ ${content.substring(0, 1000)}...
 タグのみを返してください（改行区切り）。
 `;
 
-      const response = await axios.post(API_URL, {
-        model: MODEL,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 200,
-        temperature: 0.3
-      }, {
+      const response = await fetch(API_URL, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': 'https://note.com',
           'X-Title': 'Investment Management Bot'
-        }
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 200,
+          temperature: 0.3
+        })
       });
 
-      return response.data.choices[0].message.content;
+      const data = await response.json();
+      return data.choices[0].message.content;
     }
 
     // 記事をリライトしてタグを生成
