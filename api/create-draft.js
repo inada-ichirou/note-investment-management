@@ -119,6 +119,18 @@ export default async function handler(req, res) {
       });
 
       const data = await response.json();
+      
+      // エラーハンドリング
+      if (!response.ok) {
+        console.error('OpenRouter API Error:', data);
+        throw new Error(`OpenRouter API error: ${response.status} - ${data.error?.message || 'Unknown error'}`);
+      }
+      
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from OpenRouter API');
+      }
+      
       return data.choices[0].message.content;
     }
 
@@ -190,6 +202,18 @@ export default async function handler(req, res) {
       });
 
       const data = await response.json();
+      
+      // エラーハンドリング
+      if (!response.ok) {
+        console.error('OpenRouter API Error:', data);
+        throw new Error(`OpenRouter API error: ${response.status} - ${data.error?.message || 'Unknown error'}`);
+      }
+      
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from OpenRouter API');
+      }
+      
       return data.choices[0].message.content;
     }
 
@@ -232,6 +256,18 @@ ${content.substring(0, 1000)}...
       });
 
       const data = await response.json();
+      
+      // エラーハンドリング
+      if (!response.ok) {
+        console.error('OpenRouter API Error:', data);
+        throw new Error(`OpenRouter API error: ${response.status} - ${data.error?.message || 'Unknown error'}`);
+      }
+      
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from OpenRouter API');
+      }
+      
       return data.choices[0].message.content;
     }
 
