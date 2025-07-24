@@ -2,14 +2,15 @@
 
 // Lambda本番用 + ローカルテスト両対応のnote自動投稿スクリプト
 const isLambda = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-require('dotenv').config();
+import dotenv from 'dotenv';
+dotenv.config();
 const isFly = !!process.env.FLY_APP_NAME; // Fly.io環境判定を追加
 
 // --- Puppeteerのrequire方法 ---
 // Renderなどのクラウド環境ではpuppeteer本体を使う必要があるため、puppeteerをrequireします。
 // GitHub Actionsなどでpuppeteer-coreを使いたい場合は、適宜切り替えてください。
 // 例: process.env.PUPPETEER_EXECUTABLE_PATH で分岐するなど
-const puppeteer = require('puppeteer');
+import puppeteer from 'puppeteer';
 // const puppeteer = require('puppeteer-core'); // ←GitHub Actions等でchromeを自前で用意する場合はこちら
 
 let launchOptions;
@@ -77,8 +78,8 @@ if (isLambda) {
   });
 }
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // 記事データ取得
 function getArticleData(articlePath) {
@@ -93,7 +94,7 @@ function getArticleData(articlePath) {
 
 // サムネイル画像をランダム選択
 function getRandomThumbnail() {
-  const dir = path.join(__dirname, 'thumbnails');
+  const dir = path.join(process.cwd(), 'thumbnails');
   const files = fs.readdirSync(dir).filter(f => /\.(jpg|jpeg|png|gif)$/i.test(f));
   if (files.length === 0) throw new Error('サムネイル画像がありません');
   const file = files[Math.floor(Math.random() * files.length)];
@@ -209,7 +210,7 @@ async function dragAndDropToAddButton(page) {
     console.error('ドラッグ＆ドロップ画像アップロード中にエラー:', e);
   }
 }
-exports.dragAndDropToAddButton = dragAndDropToAddButton;
+// exports.dragAndDropToAddButton = dragAndDropToAddButton;
 
 // ログイン処理
 async function login(page, email, password) {
@@ -277,7 +278,7 @@ async function login(page, email, password) {
   // ポップアップの有無にかかわらず2秒待機してから次の処理へ
   await new Promise(resolve => setTimeout(resolve, 2000));
 }
-exports.login = login;
+// exports.login = login;
 
 // 投稿画面遷移
 async function goToNewPost(page) {
@@ -374,7 +375,7 @@ async function goToNewPost(page) {
   await page.waitForNavigation();
   console.log('新規投稿画面に遷移しました');
 }
-exports.goToNewPost = goToNewPost;
+// exports.goToNewPost = goToNewPost;
 
 // 記事入力
 async function fillArticle(page, title, body) {
@@ -403,7 +404,7 @@ async function fillArticle(page, title, body) {
     throw new Error('本文入力欄が見つかりませんでした');
   }
 }
-exports.fillArticle = fillArticle;
+// exports.fillArticle = fillArticle;
 
 // 下書き保存
 async function saveDraft(page) {
@@ -424,7 +425,7 @@ async function saveDraft(page) {
     throw new Error('「下書き保存」ボタンが見つかりませんでした');
   }
 }
-exports.saveDraft = saveDraft;
+// exports.saveDraft = saveDraft;
 
 // 閉じる処理
 async function closeDialogs(page) {
@@ -468,7 +469,7 @@ async function closeDialogs(page) {
   }
   await new Promise(resolve => setTimeout(resolve, 500));
 }
-exports.closeDialogs = closeDialogs;
+// exports.closeDialogs = closeDialogs;
 
 // 投稿一覧管理表.mdをパースし、下書き保存日が空欄の行のファイル名リストを返す
 function parseUnsubmittedArticles(tablePath) {
@@ -588,10 +589,13 @@ async function main() {
   return { status: 'done' };
 }
 
+// 関数をエクスポート
+export { login, goToNewPost, dragAndDropToAddButton, fillArticle, saveDraft, closeDialogs };
+
 if (isLambda) {
-  exports.handler = async (event) => {
-    return await main();
-  };
-} else if (require.main === module) {
+  // exports.handler = async (event) => {
+  //   return await main();
+  // };
+} else if (import.meta.url === `file://${process.argv[1]}`) {
   main().then(() => console.log('完了')).catch(console.error);
 } 

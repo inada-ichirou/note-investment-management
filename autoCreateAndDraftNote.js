@@ -4,12 +4,13 @@
 // 日本語コメントで説明
 
 // dotenvの読み込みを最初に行う
-require('dotenv').config();
+import dotenv from 'dotenv';
+dotenv.config();
 
-const puppeteer = require('puppeteer');
-// const fs = require('fs');
-// const path = require('path');
-const axios = require('axios');
+import puppeteer from 'puppeteer';
+// import fs from 'fs';
+// import path from 'path';
+import fetch from 'node-fetch';
 // const { execSync } = require('child_process');
 
 const API_KEY = process.env.OPENROUTER_API_KEY;
@@ -170,31 +171,39 @@ async function generateArticle(topic, pattern) {
       } else {
         console.log('API_KEYが未設定です');
       }
-      const res = await axios.post(API_URL, {
-        model: MODEL,
-        messages,
-        max_tokens: 1200,
-        temperature: 0.7
-      }, {
+      const res = await fetch(API_URL, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages,
+          max_tokens: 1200,
+          temperature: 0.7
+        })
       });
       
-      // console.log("AI記事生成APIリクエスト-res", res)
-      // console.log("AI記事生成APIリクエスト-res.data.choices[0].message.content", res.data.choices[0].message.content)
-      // console.log("AI記事生成APIリクエスト-res.data.choices", res.data.choices)
-
-
-      // レスポンスが正常かチェック
-      if (!res || !res.data || !res.data.choices || !res.data.choices[0] || !res.data.choices[0].message || !res.data.choices[0].message.content) {
-        console.error(`AI記事生成APIレスポンスが不正です（${tryCount}回目）:`, res && res.data);
-        throw new Error('AI記事生成APIレスポンスが不正です');
+      const data = await res.json();
+      
+      // エラーハンドリング
+      if (!res.ok) {
+        console.error('OpenRouter API Error:', data);
+        throw new Error(`OpenRouter API error: ${res.status} - ${data.error?.message || 'Unknown error'}`);
       }
       
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from OpenRouter API');
+      }
+      
+      // console.log("AI記事生成APIリクエスト-res", res)
+      // console.log("AI記事生成APIリクエスト-res.data.choices[0].message.content", data.choices[0].message.content)
+      // console.log("AI記事生成APIリクエスト-res.data.choices", data.choices)
+
       // これがレスポンスの中身
-      return res.data.choices[0].message.content.trim();
+      return data.choices[0].message.content.trim();
     } catch (e) {
       lastError = e;
       console.error(`AI記事生成APIエラー（${tryCount}回目）:`, e.message);
@@ -226,14 +235,7 @@ async function generateArticle(topic, pattern) {
 // }
 
 // note.com下書き保存用の関数をインポート
-const {
-  login,
-  goToNewPost,
-  dragAndDropToAddButton,
-  fillArticle,
-  saveDraft,
-  closeDialogs
-} = require('./noteAutoDraftAndSheetUpdate');
+import { login, goToNewPost, dragAndDropToAddButton, fillArticle, saveDraft, closeDialogs } from './noteAutoDraftAndSheetUpdate.js';
 
 // セクションごとに分割
 function splitSections(raw) {
@@ -286,18 +288,33 @@ async function rewriteSection(heading, body, API_URL, API_KEY, MODEL) {
     { role: 'system', content: 'あなたは日本語のnote記事編集者です。' },
     { role: 'user', content: promptHeader }
   ];
-  const res = await axios.post(API_URL, {
-    model: MODEL,
-    messages,
-    max_tokens: 600,
-    temperature: 0.7
-  }, {
+  const res = await fetch(API_URL, {
+    method: 'POST',
     headers: {
       'Authorization': `Bearer ${API_KEY}`,
       'Content-Type': 'application/json'
-    }
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages,
+      max_tokens: 600,
+      temperature: 0.7
+    })
   });
-  return res.data.choices[0].message.content.trim();
+  const data = await res.json();
+  
+  // エラーハンドリング
+  if (!res.ok) {
+    console.error('OpenRouter API Error:', data);
+    throw new Error(`OpenRouter API error: ${res.status} - ${data.error?.message || 'Unknown error'}`);
+  }
+  
+  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    console.error('Invalid response format:', data);
+    throw new Error('Invalid response format from OpenRouter API');
+  }
+  
+  return data.choices[0].message.content.trim();
 }
 
 // 記事末尾にタグを自動付与
@@ -316,18 +333,21 @@ async function generateTagsFromContent(content, API_URL, API_KEY, MODEL) {
     { role: 'system', content: 'あなたは日本語のnote記事編集者です。' },
     { role: 'user', content: prompt }
   ];
-  const res = await axios.post(API_URL, {
-    model: MODEL,
-    messages,
-    max_tokens: 100,
-    temperature: 0.5
-  }, {
+  const res = await fetch(API_URL, {
+    method: 'POST',
     headers: {
       'Authorization': `Bearer ${API_KEY}`,
       'Content-Type': 'application/json'
-    }
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages,
+      max_tokens: 100,
+      temperature: 0.5
+    })
   });
-  return res.data.choices[0].message.content.trim();
+  const data = await res.json();
+  return data.choices[0].message.content.trim();
 }
 
 // 200字未満のセクションをリライトし、タグを付与して返す
@@ -364,141 +384,10 @@ async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   return newRaw;
 }
 
-// メイン処理
-(async () => {
-  // 1. 題材ランダム選択
-  const topic = topics[Math.floor(Math.random() * topics.length)];
-  // 2. 切り口ランダム選択
-  const pattern = patterns[Math.floor(Math.random() * patterns.length)];
-  console.log('選ばれた題材:', topic);
-  console.log('選ばれた切り口:', pattern);
 
-  // 3. AIで記事生成
-  const article = await generateArticle(topic, pattern);
-  console.log('AI生成記事全文:\n', article);
-  if (!article || article.length < 30) {
-    console.error('AI記事生成に失敗、または内容が不十分です。処理を中断します。');
-    return;
-  }
-
-  // 4. タイトル抽出（# タイトル 形式を強化）
-  let title = '無題';
-  const titleMatch = article.match(/^#\s*(.+)$/m);
-  if (titleMatch && titleMatch[1].trim().length > 0) {
-    title = titleMatch[1].trim();
-  } else {
-    // 先頭行がタイトルでない場合、最初の10文字を仮タイトルに
-    title = article.split('\n').find(line => line.trim().length > 0)?.slice(0, 10) || '無題';
-  }
-
-  // 本文から「タイトルと同じh1行（# タイトル）」をすべて除去する
-  const h1TitleLine = `# ${title}`;
-  const articleLines = article.split('\n');
-  // console.log('【h1タイトル除去デバッグ】');
-  console.log('タイトル:', title);
-  console.log('h1TitleLine:', JSON.stringify(h1TitleLine));
-  // articleLines.forEach((line, idx) => {
-  //   if (line.trim() === h1TitleLine) {
-  //     console.log(`>> 除去対象: 行${idx + 1}:`, JSON.stringify(line));
-  //   } else {
-  //     console.log(`   残す: 行${idx + 1}:`, JSON.stringify(line));
-  //   }
-  // });
-  const filteredArticleLines = articleLines.filter(line => line.trim() !== h1TitleLine);
-  const filteredArticle = filteredArticleLines.join('\n');
-  // console.log('【h1タイトル除去後の本文行リスト】');
-  // filteredArticleLines.forEach((line, idx) => {
-  //   console.log(`   ${idx + 1}:`, JSON.stringify(line));
-  // });
-
-  // 5. 記事リライト・チェック（直接関数で処理）
-  let rewrittenArticle = await rewriteAndTagArticle(filteredArticle, API_URL, API_KEY, MODEL);
-  console.log('記事リライト・チェックが完了しました');
-
-  // 6. note.comに下書き保存（Puppeteerで自動化）
-  try {
-    console.log('note.comに下書き保存処理を開始します...');
-    
-    // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
-    // 注意: Puppeteerは必須機能のため無効化しない
-    console.log('=== Fly.io環境でのPuppeteer起動 ===');
-    
-    // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
-    const isFly = !!process.env.FLY_APP_NAME;
-    const isCI = process.env.CI === 'true';
-    console.log('process.env.CIの値:', process.env.CI);
-    console.log('isCI:', isCI);
-    console.log('isFly:', isFly);
-    
-    console.log('Puppeteer起動開始...');
-    const browser = await Promise.race([
-      puppeteer.launch({
-        headless: isFly || isCI ? true : false,
-        executablePath: '/usr/bin/google-chrome-stable',
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--disable-software-rasterizer',
-          '--no-first-run',
-          '--disable-extensions',
-          '--disable-background-timer-throttling',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding',
-          '--disable-features=TranslateUI',
-          '--disable-ipc-flooding-protection',
-          '--window-size=1280,800',
-          '--remote-debugging-port=9222',
-          '--disable-dev-tools',
-          '--disable-infobars',
-          '--disable-breakpad',
-          '--disable-client-side-phishing-detection',
-          '--disable-component-update',
-          '--disable-default-apps',
-          '--disable-domain-reliability',
-          '--disable-hang-monitor',
-          '--disable-popup-blocking',
-          '--disable-prompt-on-repost',
-          '--metrics-recording-only',
-          '--safebrowsing-disable-auto-update',
-          '--password-store=basic',
-          '--use-mock-keychain',
-          '--lang=ja-JP',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor'
-        ]
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Puppeteer起動タイムアウト（30秒）')), 30000)
-      )
-    ]);
-    console.log('Puppeteer起動完了');
-    const page = await browser.newPage();
-    // noteにログイン
-    await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
-    // 新規投稿画面へ遷移
-    await goToNewPost(page);
-    // サムネイル画像アップロード
-    await dragAndDropToAddButton(page);
-    // 記事タイトル・本文を入力
-    await fillArticle(page, title, rewrittenArticle); // リライト・タグ付与済み本文
-    // 下書き保存
-    await saveDraft(page);
-    // ダイアログを閉じる
-    await closeDialogs(page);
-    await browser.close();
-    console.log('note.comへの下書き保存が完了しました');
-    // 成功時に記事タイトルを表示
-    console.log('下書き保存した記事タイトル:', title);
-  } catch (e) {
-    console.error('note.com下書き保存処理中にエラー:', e);
-    throw e;
-  }
-})();
 
 // APIサーバー用のmain関数をエクスポート
-module.exports.main = async function() {
+export default async function main() {
   // 1. 題材ランダム選択
   const topic = topics[Math.floor(Math.random() * topics.length)];
   // 2. 切り口ランダム選択
@@ -555,7 +444,7 @@ module.exports.main = async function() {
     const browser = await Promise.race([
       puppeteer.launch({
         headless: isFly || isCI ? true : false,
-        executablePath: '/usr/bin/google-chrome-stable',
+        executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -616,4 +505,9 @@ module.exports.main = async function() {
     console.error('note.com下書き保存処理中にエラー:', e);
     throw e;
   }
-}; 
+}
+
+// 直接実行の場合
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().then(() => console.log('完了')).catch(console.error);
+}

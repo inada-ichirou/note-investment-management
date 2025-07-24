@@ -2,6 +2,7 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'fs';
 import fetch from 'node-fetch';
+import { login, goToNewPost, dragAndDropToAddButton, fillArticle, saveDraft, closeDialogs } from '../noteAutoDraftAndSheetUpdate.js';
 
 export default async function handler(req, res) {
   // GETとPOSTリクエストを許可
@@ -334,38 +335,23 @@ ${content.substring(0, 1000)}...
 
     // note.comにログイン
     console.log('note.comにログイン中...');
-    await page.goto('https://note.com/login', { waitUntil: 'networkidle2' });
-    
-    await page.type('input[name="email"]', process.env.NOTE_EMAIL);
-    await page.type('input[name="password"]', process.env.NOTE_PASSWORD);
-    await page.click('button[type="submit"]');
-    
-    // ログイン完了を待機
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
-    console.log('ログイン完了');
+    await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
 
-    // 新規記事作成ページに移動
-    await page.goto('https://note.com/notes/new', { waitUntil: 'networkidle2' });
+    // 新規投稿画面へ遷移
+    await goToNewPost(page);
     
-    // タイトルを入力
+    // サムネイル画像アップロード
+    await dragAndDropToAddButton(page);
+    
+    // 記事タイトル・本文を入力
     const title = `${randomTopic} - ${randomPattern}`;
-    await page.type('input[placeholder*="タイトル"], input[name="title"]', title);
+    await fillArticle(page, title, improvedContent);
     
-    // 本文を入力
-    await page.type('textarea[placeholder*="本文"], textarea[name="body"]', improvedContent);
+    // 下書き保存
+    await saveDraft(page);
     
-    // タグを入力
-    const tagInput = await page.$('input[placeholder*="タグ"], input[name="tags"]');
-    if (tagInput) {
-      await tagInput.type(tags);
-    }
-    
-    // 下書きとして保存
-    const saveButton = await page.$('button:contains("下書き保存"), button[data-testid="save-draft"]');
-    if (saveButton) {
-      await saveButton.click();
-      console.log('下書き保存完了');
-    }
+    // ダイアログを閉じる
+    await closeDialogs(page);
 
     await browser.close();
 
