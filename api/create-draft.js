@@ -1,7 +1,7 @@
 // 記事を自動作成して下書きに追加するAPIエンドポイント
 import puppeteer from 'puppeteer-core';
 import fs from 'fs';
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
   // GETとPOSTリクエストを許可
