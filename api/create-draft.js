@@ -76,28 +76,41 @@ export default async function handler(req, res) {
 
     // 記事生成
     async function generateArticle(topic, pattern) {
-      const prompt = `
-以下の条件で投資・資産運用に関する記事を作成してください。
-
-題材: ${topic}
-切り口: ${pattern}
-
-要件:
-- 2000-3000文字程度
-- 実用的で具体的な内容
-- 初心者にも分かりやすい説明
-- 見出しを適切に使用
-- 箇条書きやリストを効果的に使用
-- 読者の行動を促す内容
-
-形式:
-- タイトル
-- 導入文（200-300文字）
-- 本文（見出し付き）
-- まとめ（200-300文字）
-
-投資・資産運用の専門知識を活かして、価値のある記事を作成してください。
-`;
+      // 記事生成プロンプト（可読性向上のため分割）
+      const promptLines = [
+        'あなたは日本語のnote記事編集者です。以下の題材と切り口でnote記事を1本作成してください。',
+        '',
+        `題材: ${topic}`,
+        `切り口: ${pattern}`,
+        '',
+        '【条件】',
+        '- タイトル、本文、ハッシュタグ（#から始まるもの）を含めてください。',
+        '- タイトルは1行目に「# タイトル」として記載してください。',
+        '- 本文は見出しや箇条書きも交えて1000文字程度で丁寧にまとめてください。',
+        '- ハッシュタグは記事末尾に「#〇〇 #〇〇 ...」の形式でまとめてください。',
+        '- すべて日本語で出力してください。',
+        '- 切り口に沿った内容になるようにしてください。',
+        '- あなたはプロの投資家で、プロの編集者です。', // 試しに追加
+        '- 読みやすさを重視してください', // 試しに追加
+        '- もし題材・切り口を鑑みて可能であればランキング形式にしてください', // 試しに追加
+        '- 改行を多めに入れて、読みやすくしてください。', // 試しに追加
+        '- 文章作成時に多めに、たくさん絵文字を使用してください。各行に1つくらいは入れてください。', // 試しに追加
+        '- この記事を読んだ人が投資したい、とモチベーションが上がるような内容にしてください。',
+        '- 投資初心者がつい読みたくなるような、やさしく親しみやすい内容にしてください。',
+        '- 現役の投資家向けの難しい内容や専門的すぎる話題は避けてください。',
+        '- noteの正しいマークダウン記法のみを使ってください。',
+        '- 箇条書きはマークダウンではなく、「・ 」で表現してください。',
+        '- 見出しはh2（## 見出し）・h3（### 見出し）のみ。',
+        '- 番号付きリストは使わないようにしてください。',
+        // '- 箇条書きは「- 」、太字は「**」で囲む、引用は「> 」、コードは「```」で囲む形式のみ使用してください。',
+        '- h1（# タイトル）はタイトル行のみで本文中では使わないでください。',
+        '- その他のマークダウンやHTMLタグは使わないでください。',
+      ];
+      const prompt = promptLines.join('\n');
+      const messages = [
+        { role: 'system', content: 'あなたは日本語のnote記事編集者です。' },
+        { role: 'user', content: prompt }
+      ];
 
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -109,12 +122,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: MODEL,
-          messages: [
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
+          messages: messages,
           max_tokens: 4000,
           temperature: 0.7
         })
@@ -167,110 +175,94 @@ export default async function handler(req, res) {
 
     // セクションをリライト
     async function rewriteSection(heading, body, API_URL, API_KEY, MODEL) {
-      const prompt = `
-以下のセクションを、より読みやすく、実用的な内容に改善してください。
-
-見出し: ${heading}
-内容: ${body}
-
-改善のポイント:
-- 文章を読みやすくする
-- 具体的な例や数字を追加
-- 実践的なアドバイスを含める
-- 読者の理解を深める内容にする
-
-元の内容を大幅に変更せず、改善のみを行ってください。
-`;
-
+      const promptHeader = [
+        'あなたはプロの投資家で、プロの編集者です。',
+        `以下のnote記事の「${heading}」という見出しの本文が${body.length}文字しかありません。`,
+        '200文字以上になるように、実体験や具体例、学習アドバイス、キャリアのヒントを交えて厚くリライト・追記してください。',
+        '',
+        '【注意】',
+        '- タイトルや見出しは出力せず、本文のみを返してください。',
+        '- 「追加した要素」や「文字数」などのメタ情報は一切出力しないでください。',
+        '- 不要な記号や記号列（「】」「*」「#」など）も使用しないでください。',
+        '- 文章は話し言葉やカジュアルな表現を避け、できるだけ丁寧な敬語でまとめてください。',
+        '- です・ます・で統一してください。',
+        '- 文章のみを返してください。',
+        '- 文章は日本語で返してください。',
+        '- 英語や他言語が混じらないようにしてください。',
+        '- あなたはプロの投資家で、プロの編集者です。', // 試しに追加
+        '- 読みやすさを重視してください', // 試しに追加
+        '- 改行をなるべく多めに入れて、読みやすくしてください。', // 試しに追加
+        '- 文章作成時に多めに、たくさん絵文字を使用してください。各行に1つくらいは入れてください。', // 試しに追加
+        '- 元々の文章に沿った内容になるようにしてください。',
+        '- noteの正しいマークダウン記法のみを使ってください。',
+        '- 箇条書きはマークダウンではなく、「・ 」で表現してください。',
+        '- 番号付きリストは使わないようにしてください。',
+        `- 文章のみを返してください。`,
+        `- 文章は日本語で返してください。acency等の英語が混じらないようにしてください。`,
+        '',
+        `元の本文: ${body}`
+      ].join('\n');
+      const messages = [
+        { role: 'system', content: 'あなたは日本語のnote記事編集者です。' },
+        { role: 'user', content: promptHeader }
+      ];
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://note.com',
-          'X-Title': 'Investment Management Bot'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           model: MODEL,
-          messages: [
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: 2000,
-          temperature: 0.5
+          messages,
+          max_tokens: 600,
+          temperature: 0.7
         })
       });
-
       const data = await response.json();
-      
       // エラーハンドリング
       if (!response.ok) {
         console.error('OpenRouter API Error:', data);
         throw new Error(`OpenRouter API error: ${response.status} - ${data.error?.message || 'Unknown error'}`);
       }
-      
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         console.error('Invalid response format:', data);
         throw new Error('Invalid response format from OpenRouter API');
       }
-      
-      return data.choices[0].message.content;
+      return data.choices[0].message.content.trim();
     }
 
     // タグを生成
     async function generateTagsFromContent(content, API_URL, API_KEY, MODEL) {
-      const prompt = `
-以下の記事内容から、note.comで使用するタグを5-8個生成してください。
-
-記事内容:
-${content.substring(0, 1000)}...
-
-タグの条件:
-- 投資・資産運用に関連する
-- 検索されやすいキーワード
-- ハッシュタグ形式（#タグ名）
-- 日本語と英語の組み合わせも可
-
-タグのみを返してください（改行区切り）。
-`;
-
-      const response = await fetch(API_URL, {
+      const promptLines = [
+        'あなたは日本語のnote記事編集者です。',
+        '以下の記事内容を読み、記事の内容に最も関連するハッシュタグを3～5個、日本語で生成してください。',
+        '必ず「#資産運用 #投資 #運用 #株 #投資信託 #FIRE」を含め、他にも内容に合うタグがあれば追加してください。',
+        'タグは半角スペース区切りで、本文や説明は一切不要です。',
+        '',
+        '記事内容:',
+        content
+      ];
+      const prompt = promptLines.join('\n');
+      const messages = [
+        { role: 'system', content: 'あなたは日本語のnote記事編集者です。' },
+        { role: 'user', content: prompt }
+      ];
+      const res = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://note.com',
-          'X-Title': 'Investment Management Bot'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           model: MODEL,
-          messages: [
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: 200,
-          temperature: 0.3
+          messages,
+          max_tokens: 100,
+          temperature: 0.5
         })
       });
-
-      const data = await response.json();
-      
-      // エラーハンドリング
-      if (!response.ok) {
-        console.error('OpenRouter API Error:', data);
-        throw new Error(`OpenRouter API error: ${response.status} - ${data.error?.message || 'Unknown error'}`);
-      }
-      
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error('Invalid response format:', data);
-        throw new Error('Invalid response format from OpenRouter API');
-      }
-      
-      return data.choices[0].message.content;
+      const data = await res.json();
+      return data.choices[0].message.content.trim();
     }
 
     // 記事をリライトしてタグを生成
