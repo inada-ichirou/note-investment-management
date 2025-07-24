@@ -24,6 +24,7 @@ export default async function handler(req, res) {
 
     const API_KEY = process.env.OPENROUTER_API_KEY;
     const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+    // const MODEL = 'openai/gpt-3.5-turbo';
     const MODEL = 'deepseek/deepseek-chat-v3-0324:free';
 
     // 題材リスト
