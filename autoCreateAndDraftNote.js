@@ -383,7 +383,30 @@ export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   return newRaw;
 }
 
+/**
+ * 記事本文からタイトルを抽出し、h1タイトル行を除去した本文を返す
+ * @param {string} article - 記事本文
+ * @returns {{ title: string, filteredArticle: string }}
+ */
+export function extractTitleAndFilterH1(article) {
+  let title = '無題';
+  const titleMatch = article.match(/^#\s*(.+)$/m);
+  if (titleMatch && titleMatch[1].trim().length > 0) {
+    title = titleMatch[1].trim();
+  } else {
+    // 先頭行がタイトルでない場合、最初の10文字を仮タイトルに
+    title = article.split('\n').find(line => line.trim().length > 0)?.slice(0, 10) || '無題';
+  }
 
+  const h1TitleLine = `# ${title}`;
+  const articleLines = article.split('\n');
+  console.log('タイトル:', title);
+  console.log('h1TitleLine:', JSON.stringify(h1TitleLine));
+  const filteredArticleLines = articleLines.filter(line => line.trim() !== h1TitleLine);
+  const filteredArticle = filteredArticleLines.join('\n');
+
+  return { title, filteredArticle };
+}
 
 // APIサーバー用のmain関数をエクスポート
 export default async function main() {
@@ -402,23 +425,8 @@ export default async function main() {
     return;
   }
 
-  // 4. タイトル抽出（# タイトル 形式を強化）
-  let title = '無題';
-  const titleMatch = article.match(/^#\s*(.+)$/m);
-  if (titleMatch && titleMatch[1].trim().length > 0) {
-    title = titleMatch[1].trim();
-  } else {
-    // 先頭行がタイトルでない場合、最初の10文字を仮タイトルに
-    title = article.split('\n').find(line => line.trim().length > 0)?.slice(0, 10) || '無題';
-  }
-
-  // 本文から「タイトルと同じh1行（# タイトル）」をすべて除去する
-  const h1TitleLine = `# ${title}`;
-  const articleLines = article.split('\n');
-  console.log('タイトル:', title);
-  console.log('h1TitleLine:', JSON.stringify(h1TitleLine));
-  const filteredArticleLines = articleLines.filter(line => line.trim() !== h1TitleLine);
-  const filteredArticle = filteredArticleLines.join('\n');
+  // 4. タイトル抽出とh1タイトル行除去
+  const { title, filteredArticle } = extractTitleAndFilterH1(article);
 
   // 5. 記事リライト・チェック（直接関数で処理）
   let rewrittenArticle = await rewriteAndTagArticle(filteredArticle, API_URL, API_KEY, MODEL);

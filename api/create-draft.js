@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer-core';
 import fs from 'fs';
 import fetch from 'node-fetch';
 import { login, goToNewPost, dragAndDropToAddButton, fillArticle, saveDraft, closeDialogs } from '../noteAutoDraftAndSheetUpdate.js';
-import { generateArticle, rewriteSection, generateTagsFromContent, rewriteAndTagArticle, topics, patterns, MODEL, API_URL } from '../autoCreateAndDraftNote.js';
+import { generateArticle, rewriteSection, generateTagsFromContent, rewriteAndTagArticle, topics, patterns, MODEL, API_URL, extractTitleAndFilterH1 } from '../autoCreateAndDraftNote.js';
 
 export default async function handler(req, res) {
   // GETとPOSTリクエストを許可
@@ -35,21 +35,24 @@ export default async function handler(req, res) {
 
     // 記事生成
     console.log('記事を生成中...');
-    const rawArticle = await generateArticle(randomTopic, randomPattern);
+    const article = await generateArticle(randomTopic, randomPattern);
     console.log('記事生成完了');
 
+    console.log('AI生成記事全文:\n', article);
+    if (!article || article.length < 30) {
+      console.error('AI記事生成に失敗、または内容が不十分です。処理を中断します。');
+      return;
+    }
+  
+    
     // 記事をセクションに分割
 
     // console.log('タグを生成中...');
     // const tags = await generateTagsFromContent(improvedContent, API_URL, API_KEY, MODEL);
     // console.log('タグ生成完了');
 
-    // 本文から「タイトルと同じh1行（# タイトル）」をすべて除去する
-    const title = `${randomTopic} - ${randomPattern}`;
-    const h1TitleLine = `# ${title}`;
-    const articleLines = improvedContent.split('\n');
-    const filteredArticleLines = articleLines.filter(line => line.trim() !== h1TitleLine);
-    const filteredArticle = filteredArticleLines.join('\n');
+    // 本文からタイトル抽出とh1タイトル行除去
+    const { title, filteredArticle } = extractTitleAndFilterH1(article);
 
     // 5. 記事リライト・チェック（importしたrewriteAndTagArticleを利用）
     let rewrittenArticle = await rewriteAndTagArticle(filteredArticle, API_URL, API_KEY, MODEL);
@@ -126,7 +129,7 @@ export default async function handler(req, res) {
       topic: randomTopic,
       pattern: randomPattern,
       contentLength: rewrittenArticle.length,
-      tags: tags,
+      // tags: tags,
       environment: 'Vercel Functions'
     };
 
