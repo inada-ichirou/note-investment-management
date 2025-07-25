@@ -14,7 +14,7 @@ import fetch from 'node-fetch';
 // const { execSync } = require('child_process');
 
 const API_KEY = process.env.OPENROUTER_API_KEY;
-const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+export const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // デバッグ用：環境変数の確認
 console.log('=== 環境変数確認 ===');
@@ -54,14 +54,14 @@ console.log('APIキーにタブが含まれているか:', API_KEY.includes('\t'
 // https://openrouter.ai/models?max_price=0&order=top-weekly
 // を見ても、↓一番使われている
 // ↓少し遅いがまあまあ文章作成能力も高そう
-const MODEL = 'deepseek/deepseek-chat-v3-0324:free';
+export const MODEL = 'deepseek/deepseek-chat-v3-0324:free';
 
 
 // const POSTS_DIR = 'posts';
 // const SHEET_PATH = '投稿一覧管理表.md';
 
 // 題材リスト
-const topics = [
+export const topics = [
   '資産運用の基礎',
   '投資初心者向けガイド',
   // 投資信託について多めに
@@ -83,7 +83,7 @@ const topics = [
 ];
 
 // 切り口リスト
-const patterns = [
+export const patterns = [
   '一歩踏み込んだ理解',
   '具体的な活用方法',
   '楽にする方法',
@@ -116,7 +116,7 @@ const patterns = [
 ];
 
 // AIで記事生成
-async function generateArticle(topic, pattern) {
+export async function generateArticle(topic, pattern) {
   // 記事生成プロンプト（可読性向上のため分割）
   const promptLines = [
     'あなたは日本語のnote記事編集者です。以下の題材と切り口でnote記事を1本作成してください。',
@@ -237,8 +237,7 @@ async function generateArticle(topic, pattern) {
 // note.com下書き保存用の関数をインポート
 import { login, goToNewPost, dragAndDropToAddButton, fillArticle, saveDraft, closeDialogs } from './noteAutoDraftAndSheetUpdate.js';
 
-// セクションごとに分割
-function splitSections(raw) {
+export function splitSections(raw) {
   const parts = raw.split(/^##+ /m); // 2個以上の#で分割
   const firstPart = parts[0];
   const sections = parts.slice(1).map((section) => {
@@ -255,7 +254,7 @@ function splitSections(raw) {
 }
 
 // 200字未満のセクションをリライト
-async function rewriteSection(heading, body, API_URL, API_KEY, MODEL) {
+export async function rewriteSection(heading, body, API_URL, API_KEY, MODEL) {
   const promptHeader = [
     'あなたはプロの投資家で、プロの編集者です。',
     `以下のnote記事の「${heading}」という見出しの本文が${body.length}文字しかありません。`,
@@ -318,7 +317,7 @@ async function rewriteSection(heading, body, API_URL, API_KEY, MODEL) {
 }
 
 // 記事末尾にタグを自動付与
-async function generateTagsFromContent(content, API_URL, API_KEY, MODEL) {
+export async function generateTagsFromContent(content, API_URL, API_KEY, MODEL) {
   const promptLines = [
     'あなたは日本語のnote記事編集者です。',
     '以下の記事内容を読み、記事の内容に最も関連するハッシュタグを3～5個、日本語で生成してください。',
@@ -351,7 +350,7 @@ async function generateTagsFromContent(content, API_URL, API_KEY, MODEL) {
 }
 
 // 200字未満のセクションをリライトし、タグを付与して返す
-async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
+export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   let { firstPart, sections } = splitSections(raw);
   let updated = false;
   // 200字未満のセクションをリライト
