@@ -1,5 +1,5 @@
 // 記事を自動作成して下書きに追加するAPIエンドポイント
-import puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer';
 import fs from 'fs';
 import fetch from 'node-fetch';
 import { login, goToNewPost, dragAndDropToAddButton, fillArticle, saveDraft, closeDialogs } from '../noteAutoDraftAndSheetUpdate.js';
@@ -85,10 +85,18 @@ export default async function handler(req, res) {
         '/vercel/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome',
         '/usr/bin/google-chrome',
         '/usr/bin/chromium',
-        '/usr/bin/chromium-browser'
+        '/usr/bin/chromium-browser',
+        '/opt/google/chrome/chrome',
+        '/opt/google/chrome-stable/chrome',
+        '/usr/bin/google-chrome-stable',
+        '/snap/bin/chromium',
+        '/usr/bin/chrome',
+        '/usr/bin/chrome-browser'
       ];
       
+      console.log('Vercel環境でChromeパスを検索中...');
       for (const path of possiblePaths) {
+        console.log(`パス確認: ${path} - 存在: ${fs.existsSync(path)}`);
         if (fs.existsSync(path)) {
           launchOptions.executablePath = path;
           console.log(`Vercel環境でChromeパスを発見: ${path}`);
@@ -99,6 +107,8 @@ export default async function handler(req, res) {
       if (!launchOptions.executablePath) {
         console.log('Vercel環境でChromeパスが見つからないため、channelを使用');
         launchOptions.channel = 'chrome';
+        // channel使用時はexecutablePathを削除
+        delete launchOptions.executablePath;
       }
     } else if (isPipedream) {
       // Pipedream環境

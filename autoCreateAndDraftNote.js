@@ -189,13 +189,20 @@ export async function generateArticle(topic, pattern) {
       
       // エラーハンドリング
       if (!res.ok) {
-        console.error('OpenRouter API Error:', data);
+        console.error('OpenRouter API Error (generateArticle):', JSON.stringify(data, null, 2));
+        console.error('Response status:', res.status);
+        console.error('Response headers:', Object.fromEntries(res.headers.entries()));
         throw new Error(`OpenRouter API error: ${res.status} - ${data.error?.message || 'Unknown error'}`);
       }
       
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error('Invalid response format:', data);
-        throw new Error('Invalid response format from OpenRouter API');
+        console.error('Invalid response format (generateArticle) - Full response:', JSON.stringify(data, null, 2));
+        console.error('Response structure check:');
+        console.error('- data.choices exists:', !!data.choices);
+        console.error('- data.choices is array:', Array.isArray(data.choices));
+        console.error('- data.choices[0] exists:', !!data.choices?.[0]);
+        console.error('- data.choices[0].message exists:', !!data.choices?.[0]?.message);
+        throw new Error(`Invalid response format from OpenRouter API - Status: ${res.status}, Response: ${JSON.stringify(data)}`);
       }
       
       // console.log("AI記事生成APIリクエスト-res", res)
@@ -304,13 +311,20 @@ export async function rewriteSection(heading, body, API_URL, API_KEY, MODEL) {
   
   // エラーハンドリング
   if (!res.ok) {
-    console.error('OpenRouter API Error:', data);
+    console.error('OpenRouter API Error:', JSON.stringify(data, null, 2));
+    console.error('Response status:', res.status);
+    console.error('Response headers:', Object.fromEntries(res.headers.entries()));
     throw new Error(`OpenRouter API error: ${res.status} - ${data.error?.message || 'Unknown error'}`);
   }
   
   if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-    console.error('Invalid response format:', data);
-    throw new Error('Invalid response format from OpenRouter API');
+    console.error('Invalid response format - Full response:', JSON.stringify(data, null, 2));
+    console.error('Response structure check:');
+    console.error('- data.choices exists:', !!data.choices);
+    console.error('- data.choices is array:', Array.isArray(data.choices));
+    console.error('- data.choices[0] exists:', !!data.choices?.[0]);
+    console.error('- data.choices[0].message exists:', !!data.choices?.[0]?.message);
+    throw new Error(`Invalid response format from OpenRouter API - Status: ${res.status}, Response: ${JSON.stringify(data)}`);
   }
   
   return data.choices[0].message.content.trim();
@@ -346,6 +360,19 @@ export async function generateTagsFromContent(content, API_URL, API_KEY, MODEL) 
     })
   });
   const data = await res.json();
+  
+  // エラーハンドリング
+  if (!res.ok) {
+    console.error('OpenRouter API Error (generateTags):', JSON.stringify(data, null, 2));
+    console.error('Response status:', res.status);
+    throw new Error(`OpenRouter API error: ${res.status} - ${data.error?.message || 'Unknown error'}`);
+  }
+  
+  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    console.error('Invalid response format (generateTags) - Full response:', JSON.stringify(data, null, 2));
+    throw new Error(`Invalid response format from OpenRouter API - Status: ${res.status}, Response: ${JSON.stringify(data)}`);
+  }
+  
   return data.choices[0].message.content.trim();
 }
 
@@ -496,10 +523,18 @@ export default async function main() {
         '/vercel/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome',
         '/usr/bin/google-chrome',
         '/usr/bin/chromium',
-        '/usr/bin/chromium-browser'
+        '/usr/bin/chromium-browser',
+        '/opt/google/chrome/chrome',
+        '/opt/google/chrome-stable/chrome',
+        '/usr/bin/google-chrome-stable',
+        '/snap/bin/chromium',
+        '/usr/bin/chrome',
+        '/usr/bin/chrome-browser'
       ];
       
+      console.log('Vercel環境でChromeパスを検索中...');
       for (const path of possiblePaths) {
+        console.log(`パス確認: ${path} - 存在: ${fs.existsSync(path)}`);
         if (fs.existsSync(path)) {
           launchOptions.executablePath = path;
           console.log(`Vercel環境でChromeパスを発見: ${path}`);
@@ -510,6 +545,8 @@ export default async function main() {
       if (!launchOptions.executablePath) {
         console.log('Vercel環境でChromeパスが見つからないため、channelを使用');
         launchOptions.channel = 'chrome';
+        // channel使用時はexecutablePathを削除
+        delete launchOptions.executablePath;
       }
     } else if (isPipedream) {
       // Pipedream環境
