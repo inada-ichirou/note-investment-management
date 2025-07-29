@@ -370,6 +370,11 @@ export async function generateTagsFromContent(content, API_URL, API_KEY, MODEL) 
   
   if (!data.choices || !data.choices[0] || !data.choices[0].message) {
     console.error('Invalid response format (generateTags) - Full response:', JSON.stringify(data, null, 2));
+    console.error('Response structure check:');
+    console.error('- data.choices exists:', !!data.choices);
+    console.error('- data.choices is array:', Array.isArray(data.choices));
+    console.error('- data.choices[0] exists:', !!data.choices?.[0]);
+    console.error('- data.choices[0].message exists:', !!data.choices?.[0]?.message);
     throw new Error(`Invalid response format from OpenRouter API - Status: ${res.status}, Response: ${JSON.stringify(data)}`);
   }
   
@@ -518,36 +523,49 @@ export default async function main() {
 
     // 環境別の設定
     if (isVercel) {
-      // Vercel環境 - 動的にChromeパスを検出
-      const possiblePaths = [
-        '/vercel/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome',
-        '/usr/bin/google-chrome',
-        '/usr/bin/chromium',
-        '/usr/bin/chromium-browser',
-        '/opt/google/chrome/chrome',
-        '/opt/google/chrome-stable/chrome',
-        '/usr/bin/google-chrome-stable',
-        '/snap/bin/chromium',
-        '/usr/bin/chrome',
-        '/usr/bin/chrome-browser'
-      ];
+      // Vercel環境専用設定
+      console.log('Vercel環境専用のPuppeteer設定を使用');
       
-      console.log('Vercel環境でChromeパスを検索中...');
-      for (const path of possiblePaths) {
-        console.log(`パス確認: ${path} - 存在: ${fs.existsSync(path)}`);
-        if (fs.existsSync(path)) {
-          launchOptions.executablePath = path;
-          console.log(`Vercel環境でChromeパスを発見: ${path}`);
-          break;
-        }
-      }
+      // Vercel環境では明示的にChromeパスを指定
+      launchOptions = {
+        headless: true,
+        executablePath: '/vercel/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--no-first-run',
+          '--disable-extensions',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--disable-features=TranslateUI',
+          '--disable-ipc-flooding-protection',
+          '--window-size=1280,800',
+          '--remote-debugging-port=9222',
+          '--disable-dev-tools',
+          '--disable-infobars',
+          '--disable-breakpad',
+          '--disable-client-side-phishing-detection',
+          '--disable-component-update',
+          '--disable-default-apps',
+          '--disable-domain-reliability',
+          '--disable-hang-monitor',
+          '--disable-popup-blocking',
+          '--disable-prompt-on-repost',
+          '--metrics-recording-only',
+          '--safebrowsing-disable-auto-update',
+          '--password-store=basic',
+          '--use-mock-keychain',
+          '--lang=ja-JP',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor'
+        ]
+      };
       
-      if (!launchOptions.executablePath) {
-        console.log('Vercel環境でChromeパスが見つからないため、channelを使用');
-        launchOptions.channel = 'chrome';
-        // channel使用時はexecutablePathを削除
-        delete launchOptions.executablePath;
-      }
+      console.log('Vercel環境のChromeパス:', launchOptions.executablePath);
     } else if (isPipedream) {
       // Pipedream環境
       launchOptions.channel = 'chrome';

@@ -80,36 +80,51 @@ export default async function handler(req, res) {
 
     // 環境別の設定
     if (isVercel) {
-      // Vercel環境 - 動的にChromeパスを検出
-      const possiblePaths = [
-        '/vercel/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome',
-        '/usr/bin/google-chrome',
-        '/usr/bin/chromium',
-        '/usr/bin/chromium-browser',
-        '/opt/google/chrome/chrome',
-        '/opt/google/chrome-stable/chrome',
-        '/usr/bin/google-chrome-stable',
-        '/snap/bin/chromium',
-        '/usr/bin/chrome',
-        '/usr/bin/chrome-browser'
-      ];
+      // Vercel環境専用設定
+      console.log('Vercel環境専用のPuppeteer設定を使用');
       
-      console.log('Vercel環境でChromeパスを検索中...');
-      for (const path of possiblePaths) {
-        console.log(`パス確認: ${path} - 存在: ${fs.existsSync(path)}`);
-        if (fs.existsSync(path)) {
-          launchOptions.executablePath = path;
-          console.log(`Vercel環境でChromeパスを発見: ${path}`);
-          break;
-        }
-      }
+      // Vercel環境では明示的にChromeパスを指定
+      launchOptions = {
+        headless: true,
+        executablePath: '/vercel/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-extensions',
+          '--window-size=1280,900',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--disable-features=TranslateUI',
+          '--disable-ipc-flooding-protection',
+          '--remote-debugging-port=9222',
+          '--disable-dev-tools',
+          '--disable-infobars',
+          '--disable-breakpad',
+          '--disable-client-side-phishing-detection',
+          '--disable-component-update',
+          '--disable-default-apps',
+          '--disable-domain-reliability',
+          '--disable-hang-monitor',
+          '--disable-popup-blocking',
+          '--disable-prompt-on-repost',
+          '--metrics-recording-only',
+          '--safebrowsing-disable-auto-update',
+          '--password-store=basic',
+          '--use-mock-keychain',
+          '--lang=ja-JP',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor'
+        ],
+        timeout: 120000
+      };
       
-      if (!launchOptions.executablePath) {
-        console.log('Vercel環境でChromeパスが見つからないため、channelを使用');
-        launchOptions.channel = 'chrome';
-        // channel使用時はexecutablePathを削除
-        delete launchOptions.executablePath;
-      }
+      console.log('Vercel環境のChromeパス:', launchOptions.executablePath);
     } else if (isPipedream) {
       // Pipedream環境
       launchOptions.channel = 'chrome';
@@ -138,9 +153,12 @@ export default async function handler(req, res) {
     }
 
     // Puppeteer起動
+    console.log('Puppeteer起動開始...');
     const browser = await puppeteer.launch(launchOptions);
+    console.log('Puppeteer起動完了');
 
     const page = await browser.newPage();
+    console.log('ブラウザページ作成完了');
     
     // User-Agent設定
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
@@ -148,21 +166,32 @@ export default async function handler(req, res) {
     // note.comにログイン
     console.log('note.comにログイン中...');
     await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
+    console.log('note.comログイン完了');
 
     // 新規投稿画面へ遷移
+    console.log('新規投稿画面へ遷移中...');
     await goToNewPost(page);
+    console.log('新規投稿画面遷移完了');
     
     // サムネイル画像アップロード
+    console.log('サムネイル画像アップロード中...');
     await dragAndDropToAddButton(page);
+    console.log('サムネイル画像アップロード完了');
     
     // 記事タイトル・本文を入力
+    console.log('記事タイトル・本文入力中...');
     await fillArticle(page, title, rewrittenArticle);
+    console.log('記事タイトル・本文入力完了');
     
     // 下書き保存
+    console.log('下書き保存中...');
     await saveDraft(page);
+    console.log('下書き保存完了');
     
     // ダイアログを閉じる
+    console.log('ダイアログを閉じる中...');
     await closeDialogs(page);
+    console.log('ダイアログを閉じる完了');
 
     await browser.close();
 
