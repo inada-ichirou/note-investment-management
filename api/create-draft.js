@@ -80,8 +80,26 @@ export default async function handler(req, res) {
 
     // 環境別の設定
     if (isVercel) {
-      // Vercel環境
-      launchOptions.executablePath = '/vercel/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome';
+      // Vercel環境 - 動的にChromeパスを検出
+      const possiblePaths = [
+        '/vercel/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome',
+        '/usr/bin/google-chrome',
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser'
+      ];
+      
+      for (const path of possiblePaths) {
+        if (fs.existsSync(path)) {
+          launchOptions.executablePath = path;
+          console.log(`Vercel環境でChromeパスを発見: ${path}`);
+          break;
+        }
+      }
+      
+      if (!launchOptions.executablePath) {
+        console.log('Vercel環境でChromeパスが見つからないため、channelを使用');
+        launchOptions.channel = 'chrome';
+      }
     } else if (isPipedream) {
       // Pipedream環境
       launchOptions.channel = 'chrome';
