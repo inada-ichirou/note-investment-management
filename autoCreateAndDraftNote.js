@@ -492,7 +492,7 @@ export default async function main() {
     // 環境別の設定
     if (isVercel) {
       // Vercel環境
-      launchOptions.executablePath = '/usr/bin/google-chrome';
+      launchOptions.executablePath = '/vercel/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome';
     } else if (isPipedream) {
       // Pipedream環境
       launchOptions.channel = 'chrome';
