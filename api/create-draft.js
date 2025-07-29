@@ -11,9 +11,20 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const startTime = Date.now();
+  const TIMEOUT_LIMIT = 240000; // 4分（余裕を持って）
+
   console.log('=== Create Draft API 実行開始 ===');
   console.log('Method:', req.method);
   console.log('実行時刻:', new Date().toISOString());
+
+  // タイムアウトチェック関数
+  const checkTimeout = () => {
+    const elapsed = Date.now() - startTime;
+    if (elapsed > TIMEOUT_LIMIT) {
+      throw new Error(`処理時間が制限を超えました: ${elapsed}ms`);
+    }
+  };
 
   try {
     // 環境変数チェック
@@ -35,6 +46,7 @@ export default async function handler(req, res) {
 
     // 記事生成
     console.log('記事を生成中...');
+    checkTimeout();
     const article = await generateArticle(randomTopic, randomPattern);
     console.log('記事生成完了');
 
@@ -44,17 +56,12 @@ export default async function handler(req, res) {
       return;
     }
   
-    
-    // 記事をセクションに分割
-
-    // console.log('タグを生成中...');
-    // const tags = await generateTagsFromContent(improvedContent, API_URL, API_KEY, MODEL);
-    // console.log('タグ生成完了');
-
     // 本文からタイトル抽出とh1タイトル行除去
     const { title, filteredArticle } = extractTitleAndFilterH1(article);
 
     // 5. 記事リライト・チェック（importしたrewriteAndTagArticleを利用）
+    console.log('記事リライト・チェック開始...');
+    checkTimeout();
     let rewrittenArticle = await rewriteAndTagArticle(filteredArticle, API_URL, API_KEY, MODEL);
     console.log('記事リライト・チェックが完了しました');
 
@@ -154,6 +161,7 @@ export default async function handler(req, res) {
 
     // Puppeteer起動
     console.log('Puppeteer起動開始...');
+    checkTimeout();
     const browser = await puppeteer.launch(launchOptions);
     console.log('Puppeteer起動完了');
 
@@ -165,31 +173,37 @@ export default async function handler(req, res) {
 
     // note.comにログイン
     console.log('note.comにログイン中...');
+    checkTimeout();
     await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
     console.log('note.comログイン完了');
 
     // 新規投稿画面へ遷移
     console.log('新規投稿画面へ遷移中...');
+    checkTimeout();
     await goToNewPost(page);
     console.log('新規投稿画面遷移完了');
     
     // サムネイル画像アップロード
     console.log('サムネイル画像アップロード中...');
+    checkTimeout();
     await dragAndDropToAddButton(page);
     console.log('サムネイル画像アップロード完了');
     
     // 記事タイトル・本文を入力
     console.log('記事タイトル・本文入力中...');
+    checkTimeout();
     await fillArticle(page, title, rewrittenArticle);
     console.log('記事タイトル・本文入力完了');
     
     // 下書き保存
     console.log('下書き保存中...');
+    checkTimeout();
     await saveDraft(page);
     console.log('下書き保存完了');
     
     // ダイアログを閉じる
     console.log('ダイアログを閉じる中...');
+    checkTimeout();
     await closeDialogs(page);
     console.log('ダイアログを閉じる完了');
 
@@ -205,7 +219,8 @@ export default async function handler(req, res) {
       pattern: randomPattern,
       contentLength: rewrittenArticle.length,
       // tags: tags,
-      environment: 'Vercel Functions'
+      environment: 'Vercel Functions',
+      executionTime: Date.now() - startTime
     };
 
     console.log('=== Create Draft API 実行完了 ===');
@@ -217,7 +232,8 @@ export default async function handler(req, res) {
     res.status(500).json({ 
       error: error.message,
       timestamp: new Date().toISOString(),
-      method: req.method
+      method: req.method,
+      executionTime: Date.now() - startTime
     });
   }
 }
