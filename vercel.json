@@ -20,6 +20,9 @@
     },
     "api/scheduler.js": {
       "maxDuration": 300
+    },
+    "api/check-chrome.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
