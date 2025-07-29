@@ -17,6 +17,9 @@
     },
     "api/logs.js": {
       "maxDuration": 300
+    },
+    "api/scheduler.js": {
+      "maxDuration": 300
     }
   },
   "rewrites": [
