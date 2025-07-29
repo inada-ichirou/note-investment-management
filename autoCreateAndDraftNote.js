@@ -440,52 +440,70 @@ export default async function main() {
     // 注意: Puppeteerは必須機能のため無効化しない
     console.log('=== Fly.io環境でのPuppeteer起動 ===');
     
-    // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
+    // 環境に応じたPuppeteer起動設定
+    const isVercel = process.env.VERCEL === '1';
+    const isPipedream = process.env.PIPEDREAM === '1' || process.env.PIPEDREAM_RUNTIME_ID;
     const isFly = !!process.env.FLY_APP_NAME;
     const isCI = process.env.CI === 'true';
+    
     console.log('process.env.CIの値:', process.env.CI);
     console.log('isCI:', isCI);
     console.log('isFly:', isFly);
+    console.log('isVercel:', isVercel);
+    console.log('isPipedream:', isPipedream);
+    
+    let launchOptions = {
+      headless: isFly || isCI || isVercel || isPipedream ? true : false,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--no-first-run',
+        '--disable-extensions',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+        '--window-size=1280,800',
+        '--remote-debugging-port=9222',
+        '--disable-dev-tools',
+        '--disable-infobars',
+        '--disable-breakpad',
+        '--disable-client-side-phishing-detection',
+        '--disable-component-update',
+        '--disable-default-apps',
+        '--disable-domain-reliability',
+        '--disable-hang-monitor',
+        '--disable-popup-blocking',
+        '--disable-prompt-on-repost',
+        '--metrics-recording-only',
+        '--safebrowsing-disable-auto-update',
+        '--password-store=basic',
+        '--use-mock-keychain',
+        '--lang=ja-JP',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor'
+      ]
+    };
+
+    // 環境別の設定
+    if (isVercel) {
+      // Vercel環境
+      launchOptions.executablePath = '/usr/bin/google-chrome';
+    } else if (isPipedream) {
+      // Pipedream環境
+      launchOptions.channel = 'chrome';
+    } else {
+      // ローカル環境
+      launchOptions.executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    }
     
     console.log('Puppeteer起動開始...');
     const browser = await Promise.race([
-      puppeteer.launch({
-        headless: isFly || isCI ? true : false,
-        executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--disable-software-rasterizer',
-          '--no-first-run',
-          '--disable-extensions',
-          '--disable-background-timer-throttling',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding',
-          '--disable-features=TranslateUI',
-          '--disable-ipc-flooding-protection',
-          '--window-size=1280,800',
-          '--remote-debugging-port=9222',
-          '--disable-dev-tools',
-          '--disable-infobars',
-          '--disable-breakpad',
-          '--disable-client-side-phishing-detection',
-          '--disable-component-update',
-          '--disable-default-apps',
-          '--disable-domain-reliability',
-          '--disable-hang-monitor',
-          '--disable-popup-blocking',
-          '--disable-prompt-on-repost',
-          '--metrics-recording-only',
-          '--safebrowsing-disable-auto-update',
-          '--password-store=basic',
-          '--use-mock-keychain',
-          '--lang=ja-JP',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor'
-        ]
-      }),
+      puppeteer.launch(launchOptions),
       new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Puppeteer起動タイムアウト（30秒）')), 30000)
       )

@@ -58,27 +58,11 @@ export default async function handler(req, res) {
     let rewrittenArticle = await rewriteAndTagArticle(filteredArticle, API_URL, API_KEY, MODEL);
     console.log('記事リライト・チェックが完了しました');
 
-    // Chromeパスの検出
-    const chromePaths = [
-      '/usr/bin/google-chrome',
-      '/usr/bin/chromium',
-      '/usr/bin/chromium-browser',
-      '/opt/homebrew/bin/chromium',
-      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-      '/Applications/Chromium.app/Contents/MacOS/Chromium'
-    ];
-
-    let executablePath = null;
-    for (const path of chromePaths) {
-      if (fs.existsSync(path)) {
-        executablePath = path;
-        break;
-      }
-    }
-
-    // Puppeteer起動
-    const browser = await puppeteer.launch({
-      executablePath: executablePath || process.env.PUPPETEER_EXECUTABLE_PATH,
+    // 環境に応じたPuppeteer起動設定
+    const isVercel = process.env.VERCEL === '1';
+    const isPipedream = process.env.PIPEDREAM === '1' || process.env.PIPEDREAM_RUNTIME_ID;
+    
+    let launchOptions = {
       headless: true,
       args: [
         '--no-sandbox',
@@ -92,7 +76,41 @@ export default async function handler(req, res) {
         '--window-size=1280,900'
       ],
       timeout: 60000
-    });
+    };
+
+    // 環境別の設定
+    if (isVercel) {
+      // Vercel環境
+      launchOptions.executablePath = '/usr/bin/google-chrome';
+    } else if (isPipedream) {
+      // Pipedream環境
+      launchOptions.channel = 'chrome';
+    } else {
+      // ローカル環境
+      const chromePaths = [
+        '/usr/bin/google-chrome',
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser',
+        '/opt/homebrew/bin/chromium',
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        '/Applications/Chromium.app/Contents/MacOS/Chromium'
+      ];
+
+      let executablePath = null;
+      for (const path of chromePaths) {
+        if (fs.existsSync(path)) {
+          executablePath = path;
+          break;
+        }
+      }
+      
+      if (executablePath) {
+        launchOptions.executablePath = executablePath;
+      }
+    }
+
+    // Puppeteer起動
+    const browser = await puppeteer.launch(launchOptions);
 
     const page = await browser.newPage();
     
