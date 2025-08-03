@@ -396,6 +396,9 @@ export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
       lines.splice(1, lines.length - 1, newBodyWithExtraLine);
       sections[i].raw = lines.join('\n');
       updated = true;
+      
+      await new Promise(resolve => setTimeout(resolve, 10));
+
     }
   }
   // firstPartの末尾に必ず改行を追加
@@ -518,7 +521,8 @@ export default async function main() {
         '--lang=ja-JP',
         '--disable-web-security',
         '--disable-features=VizDisplayCompositor'
-      ]
+      ],
+      defaultViewport: null
     };
 
     // 環境別の設定

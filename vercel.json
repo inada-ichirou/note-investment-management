@@ -23,6 +23,18 @@
     },
     "api/check-chrome.js": {
       "maxDuration": 60
+    },
+    "api/check-chrome-v2.js": {
+      "maxDuration": 60
+    },
+    "api/create-draft-v2.js": {
+      "maxDuration": 300
+    },
+    "api/create-draft-vercel.js": {
+      "maxDuration": 300
+    },
+    "api/check-chrome-simple.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [

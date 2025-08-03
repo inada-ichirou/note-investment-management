@@ -15,11 +15,11 @@
     "vercel-dev": "node api.js"
   },
   "dependencies": {
-    "node-fetch": "^3.3.2",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "node-fetch": "^3.3.2",
     "puppeteer": "^22.8.2",
-    "puppeteer-core": "^22.8.2",
-    "dotenv": "^16.5.0"
+    "puppeteer-core": "^22.8.2"
   },
   "engines": {
     "node": "22.x"
