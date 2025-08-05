@@ -69,30 +69,7 @@ function logTime(label) {
   
   logTime('新規ページ作成開始');
   const page = await browser.newPage();
-  logTime('puppeteer.launch 開始');
-  const browser = await puppeteer.launch({
-    headless: isFly || isCI ? true : false,
-    executablePath: '/usr/bin/google-chrome-stable',
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process',
-      '--disable-extensions',
-      '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--disable-renderer-backgrounding',
-      '--disable-features=TranslateUI',
-      '--disable-ipc-flooding-protection'
-    ]
-  });
-  logTime('puppeteer.launch 完了');
-  
-  logTime('新規ページ作成開始');
-  const page = await browser.newPage();
+  logTime('新規ページ作成完了');
 
   let isLimit = false; // 上限検知フラグ
 
@@ -111,14 +88,6 @@ function logTime(label) {
     }
   });
 
-  logTime('新規ページ作成完了');
-
-  /*
-  logTime('noteにログイン開始');
-  await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
-  logTime('noteログイン完了');
-  */
-
   // ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
   // はじめてのnoteのページ
   // const targetUrl = 'https://note.com/interests/%E3%81%AF%E3%81%98%E3%82%81%E3%81%A6%E3%81%AEnote';
@@ -127,7 +96,7 @@ function logTime(label) {
   // const targetUrl = 'https://note.com/notemagazine/m/mf2e92ffd6658'
 
   // 検索ワードリスト
-  const searchWords = [
+  const baseSearchWords = [
     '資産運用',
     '資産形成',
     '株',
@@ -157,6 +126,117 @@ function logTime(label) {
     '保険',
     '年金',
     '投資家',
+  ];
+
+  // 仕事に悩んでいそうな人を検索するワードリスト
+  const workTroubleSearchWords = [
+    // 仕事の悩み・ストレス関連
+    '仕事 悩み',
+    '職場 人間関係',
+    '仕事 ストレス',
+    '働き方 悩み',
+    'キャリア 迷い',
+    '転職 迷い',
+    '仕事 辞めたい',
+    '職場 辛い',
+    '仕事 疲れた',
+    '働く 意味',
+    // スキル・能力の悩み
+    'スキル 不足',
+    '技術 追いつけない',
+    '勉強 時間がない',
+    '成長 感じない',
+    '能力 不安',
+    '自信 ない',
+    '経験 浅い',
+    '知識 不足',
+    // 環境・条件の悩み
+    '給料 安い',
+    '残業 多い',
+    '休み 取れない',
+    '評価 されない',
+    '昇進 できない',
+    '責任 重い',
+    'プレッシャー 強い',
+    // 将来への不安
+    '将来 不安',
+    'キャリア 不安',
+    '技術 変化',
+    'AI 脅威',
+    '自動化 怖い',
+    '失業 不安',
+    '再就職 不安',
+    // 具体的な悩み
+    'コミュニケーション 苦手',
+    '会議 苦手',
+    'プレゼン 緊張',
+    '報告 遅い',
+    '締切 守れない',
+    'ミス 多い',
+    '効率 悪い',
+    '集中 できない',
+    'モチベーション 低い',
+    '燃え尽き',
+    'バーンアウト',
+    '過労',
+    'うつ',
+    'メンタル',
+    '心身 疲労'
+  ];
+
+  // お金に困っていそうな人を検索するワードリスト
+  const moneyTroubleSearchWords = [
+    // 生活費・家計の悩み
+    'お金 ない',
+    '生活費 足りない',
+    '家計 苦しい',
+    '支払い 困難',
+    '借金',
+    'ローン 返済',
+    'クレジットカード 支払い',
+    '家賃 払えない',
+    '光熱費 払えない',
+    '給料 安い',
+    '収入 減った',
+    '副業 探し',
+    'アルバイト 探し',
+    '節約 生活',
+    '貯金 できない',
+    '貯金 ゼロ',
+    '貯金 少ない',
+    '急な出費',
+    '医療費 困る',
+    '教育費 困る',
+    '子供 学費',
+    '奨学金 返済',
+    '生活保護 申請',
+    '失業',
+    '無職',
+    '転職 活動中',
+    'パート 探し',
+    'シングルマザー お金',
+    'シングルファーザー お金',
+    '老後資金 不安',
+    '年金 少ない',
+    '年金 不安',
+    '物価 高い',
+    'インフレ 困る',
+    'ガス代 高い',
+    '電気代 高い',
+    '食費 高い',
+    '家計 見直し',
+    '生活 苦しい',
+    '生活 困窮',
+    '生活 苦労',
+    '生活 苦しい',
+    '生活 苦しい'
+  ];
+
+  // 3つのリストを結合
+  const searchWords = [
+    ...baseSearchWords,
+    ...workTroubleSearchWords,
+    ...moneyTroubleSearchWords
   ];
 
   // 1日あたりの実行回数（例: 3時間ごと=8回）
