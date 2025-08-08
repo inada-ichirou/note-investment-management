@@ -1,0 +1,22 @@
+source 'https://rubygems.org'
+
+ruby '2.6.10'
+
+# Webフレームワーク
+gem 'sinatra'
+gem 'sinatra-contrib'
+gem 'puma'
+
+# HTTP通信・スクレイピング
+gem 'faraday'
+gem 'mechanize'
+gem 'nokogiri'
+
+# 環境変数
+gem 'dotenv'
+
+# JSON処理
+gem 'json'
+
+# CORS対応
+gem 'rack-cors'
