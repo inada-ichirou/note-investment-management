@@ -21,12 +21,43 @@ dotenv.config();
       '--disable-setuid-sandbox',
       '--disable-gpu',
       '--disable-dev-shm-usage',
+      '--disable-web-security',
+      '--disable-features=VizDisplayCompositor',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      '--disable-features=TranslateUI',
+      '--disable-ipc-flooding-protection',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--disable-default-apps',
+      '--disable-extensions',
+      '--disable-plugins',
+      '--disable-sync',
+      '--disable-translate',
+      '--hide-scrollbars',
+      '--mute-audio',
+      '--no-zygote',
+      '--single-process',
+      '--disable-background-networking',
+      '--metrics-recording-only',
+      '--ignore-certificate-errors',
+      '--ignore-ssl-errors',
+      '--ignore-certificate-errors-spki-list',
+      '--user-data-dir=/tmp/chrome-user-data',
+      '--data-path=/tmp/chrome-data-path',
+      '--homedir=/tmp',
+      '--disk-cache-dir=/tmp/chrome-cache-dir',
       '--window-size=1280,900'
     ],
     // Renderなどクラウド環境でchromeのパスを明示的に指定
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
   });
   const page = await browser.newPage();
+  
+  // ページのタイムアウト設定を延長（GitHub Actions環境用）
+  page.setDefaultNavigationTimeout(120000); // 120秒
+  page.setDefaultTimeout(120000); // 120秒
 
   console.log('noteにログインします');
   await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);

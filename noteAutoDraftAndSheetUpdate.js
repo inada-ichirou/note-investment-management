@@ -216,14 +216,32 @@ async function dragAndDropToAddButton(page) {
 async function login(page, email, password) {
   console.log('noteログインページへ遷移します');
   
-  // ページのタイムアウト設定を延長
-  page.setDefaultNavigationTimeout(60000); // 60秒
-  page.setDefaultTimeout(60000); // 60秒
+  // ページのタイムアウト設定を延長（GitHub Actions環境用）
+  page.setDefaultNavigationTimeout(120000); // 120秒
+  page.setDefaultTimeout(120000); // 120秒
   
-  await page.goto('https://note.com/login?redirectPath=https%3A%2F%2Fnote.com%2F', { 
-    waitUntil: 'networkidle2',
-    timeout: 60000 
-  });
+  // リトライ機能付きでページ遷移
+  let retryCount = 0;
+  const maxRetries = 3;
+  
+  while (retryCount < maxRetries) {
+    try {
+      console.log(`ページ遷移試行 ${retryCount + 1}/${maxRetries}`);
+      await page.goto('https://note.com/login?redirectPath=https%3A%2F%2Fnote.com%2F', { 
+        waitUntil: 'networkidle2',
+        timeout: 120000 
+      });
+      break; // 成功したらループを抜ける
+    } catch (error) {
+      retryCount++;
+      console.log(`ページ遷移失敗 (${retryCount}/${maxRetries}): ${error.message}`);
+      if (retryCount >= maxRetries) {
+        throw new Error(`ページ遷移に失敗しました: ${error.message}`);
+      }
+      // 5秒待ってからリトライ
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
   console.log('メールアドレスとパスワードを入力します');
   
   // 入力前に少し待機
@@ -247,10 +265,16 @@ async function login(page, email, password) {
   }
   
   // ナビゲーション完了まで待機（タイムアウト延長）
-  await page.waitForNavigation({ 
-    waitUntil: 'networkidle2',
-    timeout: 60000 
-  });
+  try {
+    await page.waitForNavigation({ 
+      waitUntil: 'networkidle2',
+      timeout: 120000 
+    });
+  } catch (error) {
+    console.log(`ナビゲーション待機でタイムアウト: ${error.message}`);
+    console.log('現在のURLを確認します:', await page.url());
+    // タイムアウトしても処理を続行（ログインが成功している可能性があるため）
+  }
   console.log('ログイン完了');
   // ログイン後のURLとタイトルを出力
   console.log('ログイン後の現在のURL:', await page.url());
