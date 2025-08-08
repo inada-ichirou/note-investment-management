@@ -71,7 +71,7 @@ Note.comでの投資関連記事の自動投稿・管理ツールの開発計画
 - **HTTP通信**: node-fetch (v3.3.2)
 - **Webフレームワーク**: Express.js
 - **デプロイ**: Vercel
-- **定期実行**: easy-cron
+- **定期実行**: GitHub Actions → Render Cron Jobs (フォールバック)
 
 ## 環境変数
 
@@ -89,9 +89,30 @@ CRON_SECRET=1234567890
 3. `follow/followFromArticles.js` - フォロー（Phase 2）
 4. `autoPublishNotes.js` - 記事公開（Phase 2）
 
+## 定期実行戦略
+
+### GitHub Actions優先運用
+- **主要定期実行**: GitHub Actions使用
+- **無料枠**: 月2,000分（現在の使用量：約960分）
+- **実行頻度**: 3時間ごと（記事作成）
+- **メリット**: 完全無料、高い信頼性、6時間の実行時間制限
+
+### Render Cron Jobs（フォールバック）
+- **切り替えタイミング**: GitHub Actions無料枠超過時
+- **月額コスト**: $1.00（年額$12）
+- **実行時間制限**: 12時間（十分すぎる余裕）
+- **メリット**: 実行時間無制限、安定したサービス
+
+### 運用方針
+1. **Phase 1**: GitHub Actionsで全機能を実装・テスト
+2. **Phase 2**: 使用量監視（月1,800分超過で警告）
+3. **Phase 3**: 必要時にRender Cron Jobsへ移行
+4. **コスト最適化**: GitHub Actions無料枠内での運用を優先
+
 ## 注意事項
 
 - **優先順位**: create-draftの安定化が最優先
 - **段階的実装**: 1つの機能が安定してから次に進む
-- **エラー監視**: Vercel Observabilityで継続監視
+- **エラー監視**: GitHub Actions + Vercel Observabilityで継続監視
 - **ログ確認**: 各実行後のログを必ず確認
+- **コスト管理**: GitHub Actions使用量の月次監視
