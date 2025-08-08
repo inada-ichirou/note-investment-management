@@ -1,0 +1,35 @@
+# Render Cron Jobs設定
+services:
+  # 記事作成ジョブ（月額$1.00）
+  - type: cron
+    name: note-create-draft
+    env: node
+    plan: starter  # 512MB RAM, 0.5 CPU - $0.00016/分
+    schedule: "0 */3 * * *"  # 3時間ごと
+    buildCommand: npm ci && npx puppeteer browsers install chrome
+    startCommand: node autoCreateAndDraftNote.js
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: NOTE_EMAIL
+        sync: false
+      - key: NOTE_PASSWORD
+        sync: false
+      - key: CI
+        value: 'true'
+
+  # フォロージョブ
+  - type: cron
+    name: note-follow-users
+    env: node
+    plan: free
+    schedule: "30 */3 * * *"  # 3時間ごと（30分ずらし）
+    buildCommand: npm ci && npx puppeteer browsers install chrome
+    startCommand: node follow/followFromArticles.js
+    envVars:
+      - key: NOTE_EMAIL
+        sync: false
+      - key: NOTE_PASSWORD
+        sync: false
+      - key: CI
+        value: 'true'
