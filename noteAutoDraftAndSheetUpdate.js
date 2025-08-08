@@ -227,6 +227,13 @@ async function login(page, email, password) {
   while (retryCount < maxRetries) {
     try {
       console.log(`ページ遷移試行 ${retryCount + 1}/${maxRetries}`);
+      
+      // ページが切断されているかチェック
+      if (page.isClosed()) {
+        console.log('ページが閉じられています。新しいページを作成します。');
+        throw new Error('Page is closed');
+      }
+      
       await page.goto('https://note.com/login?redirectPath=https%3A%2F%2Fnote.com%2F', { 
         waitUntil: 'networkidle2',
         timeout: 120000 
@@ -235,6 +242,13 @@ async function login(page, email, password) {
     } catch (error) {
       retryCount++;
       console.log(`ページ遷移失敗 (${retryCount}/${maxRetries}): ${error.message}`);
+      
+      // Frame detached エラーの場合は特別な処理
+      if (error.message.includes('detached') || error.message.includes('closed')) {
+        console.log('Frame detached エラーが発生しました。ブラウザを再起動します。');
+        throw new Error('Frame detached - browser restart required');
+      }
+      
       if (retryCount >= maxRetries) {
         throw new Error(`ページ遷移に失敗しました: ${error.message}`);
       }

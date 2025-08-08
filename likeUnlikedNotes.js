@@ -48,7 +48,25 @@ dotenv.config();
       '--data-path=/tmp/chrome-data-path',
       '--homedir=/tmp',
       '--disk-cache-dir=/tmp/chrome-cache-dir',
-      '--window-size=1280,900'
+      '--window-size=1280,900',
+      // メモリ関連の設定を追加
+      '--memory-pressure-off',
+      '--max_old_space_size=4096',
+      '--disable-features=site-per-process',
+      '--disable-site-isolation-trials',
+      '--disable-features=VizDisplayCompositor',
+      '--disable-software-rasterizer',
+      '--disable-background-networking',
+      '--disable-default-apps',
+      '--disable-sync',
+      '--disable-translate',
+      '--hide-scrollbars',
+      '--mute-audio',
+      '--no-first-run',
+      '--safebrowsing-disable-auto-update',
+      '--password-store=basic',
+      '--use-mock-keychain',
+      '--lang=ja-JP'
     ],
     // Renderなどクラウド環境でchromeのパスを明示的に指定
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
@@ -60,8 +78,104 @@ dotenv.config();
   page.setDefaultTimeout(120000); // 120秒
 
   console.log('noteにログインします');
-  await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
-  console.log('ログイン完了');
+  
+  // ログイン処理をリトライ機能付きで実行
+  let loginRetryCount = 0;
+  const maxLoginRetries = 3;
+  
+  while (loginRetryCount < maxLoginRetries) {
+    try {
+      await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
+      console.log('ログイン完了');
+      break;
+    } catch (error) {
+      loginRetryCount++;
+      console.log(`ログイン失敗 (${loginRetryCount}/${maxLoginRetries}): ${error.message}`);
+      
+      if (error.message.includes('Frame detached') || error.message.includes('browser restart required')) {
+        console.log('ブラウザを再起動してリトライします...');
+        await browser.close();
+        
+                 // 新しいブラウザインスタンスを作成
+         const newBrowser = await puppeteer.launch({
+           headless: isCloud ? true : false,
+           args: [
+             '--no-sandbox',
+             '--disable-setuid-sandbox',
+             '--disable-gpu',
+             '--disable-dev-shm-usage',
+             '--disable-web-security',
+             '--disable-features=VizDisplayCompositor',
+             '--disable-background-timer-throttling',
+             '--disable-backgrounding-occluded-windows',
+             '--disable-renderer-backgrounding',
+             '--disable-features=TranslateUI',
+             '--disable-ipc-flooding-protection',
+             '--no-first-run',
+             '--no-default-browser-check',
+             '--disable-default-apps',
+             '--disable-extensions',
+             '--disable-plugins',
+             '--disable-sync',
+             '--disable-translate',
+             '--hide-scrollbars',
+             '--mute-audio',
+             '--no-zygote',
+             '--single-process',
+             '--disable-background-networking',
+             '--metrics-recording-only',
+             '--ignore-certificate-errors',
+             '--ignore-ssl-errors',
+             '--ignore-certificate-errors-spki-list',
+             '--user-data-dir=/tmp/chrome-user-data',
+             '--data-path=/tmp/chrome-data-path',
+             '--homedir=/tmp',
+             '--disk-cache-dir=/tmp/chrome-cache-dir',
+             '--window-size=1280,900',
+             // メモリ関連の設定を追加
+             '--memory-pressure-off',
+             '--max_old_space_size=4096',
+             '--disable-features=site-per-process',
+             '--disable-site-isolation-trials',
+             '--disable-features=VizDisplayCompositor',
+             '--disable-software-rasterizer',
+             '--disable-background-networking',
+             '--disable-default-apps',
+             '--disable-sync',
+             '--disable-translate',
+             '--hide-scrollbars',
+             '--mute-audio',
+             '--no-first-run',
+             '--safebrowsing-disable-auto-update',
+             '--password-store=basic',
+             '--use-mock-keychain',
+             '--lang=ja-JP'
+           ],
+           executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
+         });
+        
+        const newPage = await newBrowser.newPage();
+        newPage.setDefaultNavigationTimeout(120000);
+        newPage.setDefaultTimeout(120000);
+        
+        // 新しいページとブラウザを現在の変数に代入
+        page = newPage;
+        browser = newBrowser;
+        
+        if (loginRetryCount >= maxLoginRetries) {
+          throw new Error('ログインに失敗しました。最大リトライ回数に達しました。');
+        }
+        continue;
+      }
+      
+      if (loginRetryCount >= maxLoginRetries) {
+        throw new Error(`ログインに失敗しました: ${error.message}`);
+      }
+      
+      // 5秒待ってからリトライ
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
 
   // ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
   // 例：searchWords.length = 11, runsPerDay = 8（3時間ごと: 0,3,6,9,12,15,18,21時）
