@@ -1,20 +1,27 @@
-console.log('=== api.js: サーバー起動処理開始 ===');
-// 環境変数を読み込み
-require('dotenv').config();
-// 必要なモジュールを読み込み
-const express = require('express');
+// APIサーバー
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+dotenv.config();
+
+const execAsync = promisify(exec);
+
+// 各モジュールをインポート
+import autoCreateAndDraftNote from './autoCreateAndDraftNote.js';
+import followFromArticles from './follow/followFromArticles.js';
+import likeUnlikedNotes from './likeUnlikedNotes.js';
+import autoPublishNotes from './autoPublishNotes.js';
+
+// Expressアプリケーションの設定
 const app = express();
 const port = process.env.PORT || 8080;
 
 // JSONボディパーサーを有効化
 app.use(express.json());
-
-// 各スクリプトのmain関数をエクスポートしておく必要があります
-// 例: module.exports.main = async function() { ... } という形
-const autoCreateAndDraftNote = require('./autoCreateAndDraftNote.js');
-const followFromArticles = require('./follow/followFromArticles.js');
-const likeUnlikedNotes = require('./likeUnlikedNotes.js');
-const autoPublishNotes = require('./autoPublishNotes.js');
+app.use(cors());
 
 // ルート（/）へのアクセスに簡単なレスポンスを返す
 app.get('/', (req, res) => {

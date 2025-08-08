@@ -1,10 +1,11 @@
 // 検索結果から、クリエイター一覧を表示して、
-// クリエイターの詳細ページに遷移してからフォロー
-// （一覧ページでのフォローは何故か本番だけうまくいかなかった）
+// 一覧画面でフォロー
 
-require('dotenv').config();
-const puppeteer = require('puppeteer');
-const { login } = require('../noteAutoDraftAndSheetUpdate');
+import dotenv from 'dotenv';
+import puppeteer from 'puppeteer';
+import { login } from '../noteAutoDraftAndSheetUpdate.js';
+
+dotenv.config();
 
 (async () => {
   console.log('Puppeteer起動オプションを取得します');

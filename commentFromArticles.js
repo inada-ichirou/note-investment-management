@@ -1,11 +1,11 @@
-// 他の人の記事に自動でコメントするスクリプト
-// Puppeteerを利用
-// 日本語コメントで説明
+// 記事からコメントを投稿するスクリプト
 
-require('dotenv').config();
-const puppeteer = require('puppeteer');
-const { login } = require('./noteAutoDraftAndSheetUpdate');
-const fs = require('fs');
+import dotenv from 'dotenv';
+import puppeteer from 'puppeteer';
+import { login } from './noteAutoDraftAndSheetUpdate.js';
+import fs from 'fs';
+
+dotenv.config();
 
 // コメント済み記事を記録するファイル
 const COMMENTED_FILE = 'commented_articles.json';

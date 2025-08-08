@@ -1,6 +1,8 @@
-require('dotenv').config();
-const puppeteer = require('puppeteer');
-const { login } = require('./noteAutoDraftAndSheetUpdate'); // login関数をexports.loginで取得
+import dotenv from 'dotenv';
+import puppeteer from 'puppeteer';
+import { login } from './noteAutoDraftAndSheetUpdate.js'; // login関数をexports.loginで取得
+
+dotenv.config();
 
 (async () => {
   console.log('Puppeteer起動オプションを取得します');

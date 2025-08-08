@@ -1,7 +1,9 @@
-require('dotenv').config();
-const puppeteer = require('puppeteer');
-const { login } = require('./noteAutoDraftAndSheetUpdate');
+import dotenv from 'dotenv';
+import puppeteer from 'puppeteer';
+import { login } from './noteAutoDraftAndSheetUpdate.js';
 // const { TwitterApi } = require('twitter-api-v2'); // Twitter連携不要のため削除
+
+dotenv.config();
 
 (async () => {
   const isCI = process.env.CI === 'true';

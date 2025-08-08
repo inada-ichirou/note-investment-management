@@ -1,5 +1,5 @@
-const puppeteer = require('puppeteer');
-const { login } = require('./noteAutoDraftAndSheetUpdate');
+import puppeteer from 'puppeteer';
+import { login } from './noteAutoDraftAndSheetUpdate.js';
 
 // メイン処理
 (async () => {

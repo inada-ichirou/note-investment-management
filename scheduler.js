@@ -1,6 +1,8 @@
-require('dotenv').config();
-const { exec } = require('child_process');
-const { promisify } = require('util');
+import dotenv from 'dotenv';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+dotenv.config();
 
 const execAsync = promisify(exec);
 

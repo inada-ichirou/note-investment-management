@@ -1,11 +1,10 @@
-// 検索結果から、クリエイター一覧を表示して、
-// 一覧画面でフォロー
-// （を試みたが、なぜか本番だけうまくいかなかった）
+// 検索ページからフォローするスクリプト
 
+import dotenv from 'dotenv';
+import puppeteer from 'puppeteer';
+import { login } from '../noteAutoDraftAndSheetUpdate.js';
 
-require('dotenv').config();
-const puppeteer = require('puppeteer');
-const { login } = require('../noteAutoDraftAndSheetUpdate');
+dotenv.config();
 
 (async () => {
   console.log('Puppeteer起動オプションを取得します');

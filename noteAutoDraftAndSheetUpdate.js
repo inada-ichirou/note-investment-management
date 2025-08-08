@@ -17,7 +17,7 @@ let launchOptions;
 
 if (isLambda) {
   // Lambda本番用
-  const chromium = require('chrome-aws-lambda');
+  const chromium = await import('chrome-aws-lambda');
   launchOptions = async () => ({
     args: chromium.args,
     defaultViewport: chromium.defaultViewport,
