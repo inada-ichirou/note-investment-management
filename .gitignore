@@ -4,3 +4,20 @@ node_modules/
 *.log
 .vercel
 .env*.local
+
+# Rails関連ファイル
+rails-backend/vendor/
+rails-backend/db/*.sqlite3
+rails-backend/log/
+rails-backend/tmp/
+rails-backend/.bundle/
+rails-backend/Gemfile.lock
+
+# Sinatra関連ファイル  
+sinatra-backend/vendor/
+sinatra-backend/.bundle/
+sinatra-backend/Gemfile.lock
+
+# Ruby関連
+*.gem
+.rbenv-version
