@@ -1,0 +1,35 @@
+name: ユーザー自動フォロー
+
+on:
+  schedule:
+    # 3時間ごとに実行（30分ずらし）
+    - cron: '30 */3 * * *'
+  workflow_dispatch: # 手動実行も可能
+
+jobs:
+  follow-users:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15  # 15分のタイムアウト設定
+    
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+        
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 依存関係インストール
+        run: npm ci
+        
+      - name: Puppeteer用ブラウザインストール
+        run: npx puppeteer browsers install chrome
+        
+      - name: ユーザー自動フォロー
+        run: node follow/followFromArticles.js
+        env:
+          NOTE_EMAIL: ${{ secrets.NOTE_EMAIL }}
+          NOTE_PASSWORD: ${{ secrets.NOTE_PASSWORD }}
+          CI: 'true'
