@@ -69,6 +69,11 @@ function logTime(label) {
   
   logTime('新規ページ作成開始');
   const page = await browser.newPage();
+  
+  // ページのタイムアウト設定を延長（GitHub Actions環境用）
+  page.setDefaultNavigationTimeout(120000); // 120秒
+  page.setDefaultTimeout(120000); // 120秒
+  
   logTime('新規ページ作成完了');
 
   let isLimit = false; // 上限検知フラグ

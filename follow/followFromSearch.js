@@ -26,6 +26,10 @@ dotenv.config();
     defaultViewport: null
   });
   const page = await browser.newPage();
+  
+  // ページのタイムアウト設定を延長（GitHub Actions環境用）
+  page.setDefaultNavigationTimeout(120000); // 120秒
+  page.setDefaultTimeout(120000); // 120秒
   // User-AgentをChromeのものに変更
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
   // page.setDefaultTimeout(60000);

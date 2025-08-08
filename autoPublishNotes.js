@@ -19,12 +19,43 @@ dotenv.config();
       '--disable-setuid-sandbox',
       '--disable-gpu',
       '--disable-dev-shm-usage',
+      '--disable-web-security',
+      '--disable-features=VizDisplayCompositor',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      '--disable-features=TranslateUI',
+      '--disable-ipc-flooding-protection',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--disable-default-apps',
+      '--disable-extensions',
+      '--disable-plugins',
+      '--disable-sync',
+      '--disable-translate',
+      '--hide-scrollbars',
+      '--mute-audio',
+      '--no-zygote',
+      '--single-process',
+      '--disable-background-networking',
+      '--metrics-recording-only',
+      '--ignore-certificate-errors',
+      '--ignore-ssl-errors',
+      '--ignore-certificate-errors-spki-list',
+      '--user-data-dir=/tmp/chrome-user-data',
+      '--data-path=/tmp/chrome-data-path',
+      '--homedir=/tmp',
+      '--disk-cache-dir=/tmp/chrome-cache-dir',
       '--window-size=1280,900'
     ],
     // Renderなどクラウド環境でchromeのパスを明示的に指定
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
   });
   const page = await browser.newPage();
+  
+  // ページのタイムアウト設定を延長（GitHub Actions環境用）
+  page.setDefaultNavigationTimeout(120000); // 120秒
+  page.setDefaultTimeout(120000); // 120秒
   console.log('User-Agentを設定します');
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
 
@@ -58,7 +89,7 @@ dotenv.config();
   console.log('遷移前のURL:', page.url());
   
   try {
-    await page.goto(draftUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto(draftUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
     console.log('下書き一覧ページに到達しました');
   } catch (e) {
     console.log('下書き一覧ページへの遷移に失敗:', e.message);
@@ -82,7 +113,7 @@ dotenv.config();
   // JavaScriptによる動的読み込みを待機
   console.log('JavaScriptによる動的読み込みを待機します');
   try {
-    // ページが完全に読み込まれるまで待機（最大10秒）
+    // ページが完全に読み込まれるまで待機（最大30秒）
     await page.waitForFunction(
       () => {
         // ページの読み込み状態を確認
@@ -90,7 +121,7 @@ dotenv.config();
         const hasContent = document.body && document.body.innerHTML.length > 100000;
         return readyState === 'complete' && hasContent;
       },
-      { timeout: 10000 }
+      { timeout: 30000 }
     );
     console.log('ページの動的読み込みが完了しました');
   } catch (e) {

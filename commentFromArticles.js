@@ -65,6 +65,10 @@ function saveCommentedArticles(list) {
   });
   logTime('puppeteer.launch 完了');
   const page = await browser.newPage();
+  
+  // ページのタイムアウト設定を延長（GitHub Actions環境用）
+  page.setDefaultNavigationTimeout(120000); // 120秒
+  page.setDefaultTimeout(120000); // 120秒
 
   // ダイアログ（alert等）検知時に即座に処理を停止
   page.on('dialog', async dialog => {
