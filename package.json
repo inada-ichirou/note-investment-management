@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node api.js",
     "test": "node testBrowserLogin.js",
+    "test-server": "node test-local-server.js",
     "create-draft": "node autoCreateAndDraftNote.js",
     "follow": "node follow/followFromArticles.js",
     "like": "node likeUnlikedNotes.js",
@@ -15,6 +16,7 @@
     "vercel-dev": "node api.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "node-fetch": "^3.3.2",
