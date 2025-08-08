@@ -1,181 +1,58 @@
 import dotenv from 'dotenv';
 import puppeteer from 'puppeteer';
 import { login } from './noteAutoDraftAndSheetUpdate.js'; // login関数をexports.loginで取得
+import fs from 'fs';
 
 dotenv.config();
 
+// Chromeの実行パスを動的に取得する関数
+async function getChromePath() {
+  const isCI = process.env.CI === 'true';
+  if (!isCI) return undefined;
+  
+  // 複数の可能性のあるパスを試す
+  const possiblePaths = [
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium'
+  ];
+  
+  for (const path of possiblePaths) {
+    if (fs.existsSync(path)) {
+      console.log(`Chrome found at: ${path}`);
+      return path;
+    }
+  }
+  
+  console.log('Chrome not found in standard paths, using default');
+  return undefined;
+}
+
 (async () => {
   console.log('Puppeteer起動オプションを取得します');
-  // CI環境（GitHub Actions等）ではheadless:'new'、ローカルではheadless:false
+  // CI環境（GitHub Actions等）ではheadless:'old'、ローカルではheadless:false
   const isCI = process.env.CI === 'true';
   console.log('process.env.CIの値:', process.env.CI);
   console.log('isCI:', isCI);
-  // 実行環境によってheadlessモードを切り替え
-  const isCloud = process.env.RENDER || process.env.CI === 'true'; // RenderやCI環境ならtrue
-  // const isCI = process.env.CI === 'true'; // ←CI(GitHub Actions等)専用の分岐に戻したい場合はこちらを有効化
-  // ※CI用に戻す場合はisCloudの代わりにisCIを使ってください
+  const chromePath = await getChromePath();
   const browser = await puppeteer.launch({
-    headless: isCloud ? true : false, // クラウドではtrue、ローカルではfalse
+    headless: isCI ? 'old' : false,
+    executablePath: chromePath,
+    defaultViewport: null, // ウインドウサイズをargsで指定するためnullに
     args: [
+      '--window-size=1280,900',
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-gpu',
-      '--disable-dev-shm-usage',
-      '--disable-web-security',
-      '--disable-features=VizDisplayCompositor',
-      '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--disable-renderer-backgrounding',
-      '--disable-features=TranslateUI',
-      '--disable-ipc-flooding-protection',
-      '--no-first-run',
-      '--no-default-browser-check',
-      '--disable-default-apps',
-      '--disable-extensions',
-      '--disable-plugins',
-      '--disable-sync',
-      '--disable-translate',
-      '--hide-scrollbars',
-      '--mute-audio',
-      '--no-zygote',
-      '--single-process',
-      '--disable-background-networking',
-      '--metrics-recording-only',
-      '--ignore-certificate-errors',
-      '--ignore-ssl-errors',
-      '--ignore-certificate-errors-spki-list',
-      '--user-data-dir=/tmp/chrome-user-data',
-      '--data-path=/tmp/chrome-data-path',
-      '--homedir=/tmp',
-      '--disk-cache-dir=/tmp/chrome-cache-dir',
-      '--window-size=1280,900',
-      // メモリ関連の設定を追加
-      '--memory-pressure-off',
-      '--max_old_space_size=4096',
-      '--disable-features=site-per-process',
-      '--disable-site-isolation-trials',
-      '--disable-features=VizDisplayCompositor',
-      '--disable-software-rasterizer',
-      '--disable-background-networking',
-      '--disable-default-apps',
-      '--disable-sync',
-      '--disable-translate',
-      '--hide-scrollbars',
-      '--mute-audio',
-      '--no-first-run',
-      '--safebrowsing-disable-auto-update',
-      '--password-store=basic',
-      '--use-mock-keychain',
-      '--lang=ja-JP'
-    ],
-    // Renderなどクラウド環境でchromeのパスを明示的に指定
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
+      '--disable-dev-shm-usage'
+    ]
   });
   const page = await browser.newPage();
-  
-  // ページのタイムアウト設定を延長（GitHub Actions環境用）
-  page.setDefaultNavigationTimeout(120000); // 120秒
-  page.setDefaultTimeout(120000); // 120秒
 
   console.log('noteにログインします');
-  
-  // ログイン処理をリトライ機能付きで実行
-  let loginRetryCount = 0;
-  const maxLoginRetries = 3;
-  
-  while (loginRetryCount < maxLoginRetries) {
-    try {
-      await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
-      console.log('ログイン完了');
-      break;
-    } catch (error) {
-      loginRetryCount++;
-      console.log(`ログイン失敗 (${loginRetryCount}/${maxLoginRetries}): ${error.message}`);
-      
-      if (error.message.includes('Frame detached') || error.message.includes('browser restart required')) {
-        console.log('ブラウザを再起動してリトライします...');
-        await browser.close();
-        
-                 // 新しいブラウザインスタンスを作成
-         const newBrowser = await puppeteer.launch({
-           headless: isCloud ? true : false,
-           args: [
-             '--no-sandbox',
-             '--disable-setuid-sandbox',
-             '--disable-gpu',
-             '--disable-dev-shm-usage',
-             '--disable-web-security',
-             '--disable-features=VizDisplayCompositor',
-             '--disable-background-timer-throttling',
-             '--disable-backgrounding-occluded-windows',
-             '--disable-renderer-backgrounding',
-             '--disable-features=TranslateUI',
-             '--disable-ipc-flooding-protection',
-             '--no-first-run',
-             '--no-default-browser-check',
-             '--disable-default-apps',
-             '--disable-extensions',
-             '--disable-plugins',
-             '--disable-sync',
-             '--disable-translate',
-             '--hide-scrollbars',
-             '--mute-audio',
-             '--no-zygote',
-             '--single-process',
-             '--disable-background-networking',
-             '--metrics-recording-only',
-             '--ignore-certificate-errors',
-             '--ignore-ssl-errors',
-             '--ignore-certificate-errors-spki-list',
-             '--user-data-dir=/tmp/chrome-user-data',
-             '--data-path=/tmp/chrome-data-path',
-             '--homedir=/tmp',
-             '--disk-cache-dir=/tmp/chrome-cache-dir',
-             '--window-size=1280,900',
-             // メモリ関連の設定を追加
-             '--memory-pressure-off',
-             '--max_old_space_size=4096',
-             '--disable-features=site-per-process',
-             '--disable-site-isolation-trials',
-             '--disable-features=VizDisplayCompositor',
-             '--disable-software-rasterizer',
-             '--disable-background-networking',
-             '--disable-default-apps',
-             '--disable-sync',
-             '--disable-translate',
-             '--hide-scrollbars',
-             '--mute-audio',
-             '--no-first-run',
-             '--safebrowsing-disable-auto-update',
-             '--password-store=basic',
-             '--use-mock-keychain',
-             '--lang=ja-JP'
-           ],
-           executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
-         });
-        
-        const newPage = await newBrowser.newPage();
-        newPage.setDefaultNavigationTimeout(120000);
-        newPage.setDefaultTimeout(120000);
-        
-        // 新しいページとブラウザを現在の変数に代入
-        page = newPage;
-        browser = newBrowser;
-        
-        if (loginRetryCount >= maxLoginRetries) {
-          throw new Error('ログインに失敗しました。最大リトライ回数に達しました。');
-        }
-        continue;
-      }
-      
-      if (loginRetryCount >= maxLoginRetries) {
-        throw new Error(`ログインに失敗しました: ${error.message}`);
-      }
-      
-      // 5秒待ってからリトライ
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    }
-  }
+  await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
+  console.log('ログイン完了');
 
   // ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
   // 例：searchWords.length = 11, runsPerDay = 8（3時間ごと: 0,3,6,9,12,15,18,21時）
@@ -357,6 +234,7 @@ dotenv.config();
   const runIndex = Math.floor(now.getHours() / 3);
   // インデックス計算
   const index = (dayOfYear * runsPerDay + runIndex) % searchWords.length;
+  // インデックス計算の解説ログ
   console.log('【順番インデックス計算】');
   console.log('searchWords.length =', searchWords.length);
   console.log('runsPerDay =', runsPerDay);
