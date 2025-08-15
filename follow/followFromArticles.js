@@ -8,6 +8,33 @@
 import dotenv from 'dotenv';
 import puppeteer from 'puppeteer';
 import { login } from '../noteAutoDraftAndSheetUpdate.js';
+import fs from 'fs';
+
+dotenv.config();
+
+// Chromeの実行パスを動的に取得する関数
+async function getChromePath() {
+  const isCI = process.env.CI === 'true';
+  if (!isCI) return undefined;
+  
+  // 複数の可能性のあるパスを試す
+  const possiblePaths = [
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium'
+  ];
+  
+  for (const path of possiblePaths) {
+    if (fs.existsSync(path)) {
+      console.log(`Chrome found at: ${path}`);
+      return path;
+    }
+  }
+  
+  console.log('Chrome not found in standard paths, using default');
+  return undefined;
+}
 
 function logTime(label) {
   const now = new Date();
@@ -16,65 +43,36 @@ function logTime(label) {
 
 (async () => {
   logTime('Puppeteer起動オプションを取得します');
-  // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
-  const isFly = !!process.env.FLY_APP_NAME;
   const isCI = process.env.CI === 'true';
   console.log('process.env.CIの値:', process.env.CI);
   console.log('isCI:', isCI);
-  console.log('isFly:', isFly);
-  
-  // Fly.io環境でのPuppeteer起動オプション（Alex MacArthurの記事を参考）
-  // 注意: Puppeteerは必須機能のため無効化しない
-  console.log('=== Fly.io環境でのPuppeteer起動 ===');
-  
   logTime('puppeteer.launch 開始');
+  const chromePath = await getChromePath();
   const browser = await puppeteer.launch({
-    headless: isFly || isCI ? true : false,
-    executablePath: '/usr/bin/google-chrome-stable',
+    headless: isCI ? 'old' : false,
+    executablePath: chromePath,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
       '--disable-gpu',
-      '--disable-software-rasterizer',
-      '--no-first-run',
+      '--disable-dev-shm-usage',
       '--disable-extensions',
-      '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--disable-renderer-backgrounding',
-      '--disable-features=TranslateUI',
-      '--disable-ipc-flooding-protection',
-      '--window-size=1280,800',
-      '--remote-debugging-port=9222',
-      '--disable-dev-tools',
-      '--disable-infobars',
-      '--disable-breakpad',
-      '--disable-client-side-phishing-detection',
-      '--disable-component-update',
-      '--disable-default-apps',
-      '--disable-domain-reliability',
-      '--disable-hang-monitor',
-      '--disable-popup-blocking',
-      '--disable-prompt-on-repost',
-      '--metrics-recording-only',
-      '--safebrowsing-disable-auto-update',
-      '--password-store=basic',
-      '--use-mock-keychain',
-      '--lang=ja-JP',
-      '--disable-web-security',
-      '--disable-features=VizDisplayCompositor'
-    ]
+      '--window-size=1280,900'
+    ],
+    defaultViewport: null
   });
   logTime('puppeteer.launch 完了');
   
   logTime('新規ページ作成開始');
   const page = await browser.newPage();
   
-  // ページのタイムアウト設定を延長（GitHub Actions環境用）
-  page.setDefaultNavigationTimeout(120000); // 120秒
-  page.setDefaultTimeout(120000); // 120秒
+
   
   logTime('新規ページ作成完了');
+
+  logTime('noteにログイン開始');
+  await login(page, process.env.NOTE_EMAIL, process.env.NOTE_PASSWORD);
+  logTime('noteログイン完了');
 
   let isLimit = false; // 上限検知フラグ
 
@@ -100,37 +98,56 @@ function logTime(label) {
   // 注目のページ
   // const targetUrl = 'https://note.com/notemagazine/m/mf2e92ffd6658'
 
-  // 検索ワードリスト
+  // 基本検索ワードリスト
   const baseSearchWords = [
-    '資産運用',
-    '資産形成',
-    '株',
-    '投資信託',
-    'FIRE',
-    '投資',
+    // '駆け出しエンジニア',
+    '開発',
+    'IT業界',
+    'プログラミング',
     '日記',
     'フォロバ',
     'はじめて',
+    'エンジニア',
     '初めて',
-    // 追加キーワード
-    '貯金',
-    '節約',
+    '転職',
+    'SES',
+    'SIer',
+    '稼ぐ',
+    'フリーランス',
+    '在宅',
+    'パソコン',
+    // 技術関連キーワード
+    'Web開発',
+    'データベース',
+    'AI',
+    'システム',
+    'インフラ',
+    'セキュリティ',
+    'UI/UX',
+    'デザイン',
+    // キャリア関連キーワード
     '副業',
-    'NISA',
-    'iDeCo',
-    '積立',
-    '長期投資',
-    '分散投資',
-    '債券',
-    '不動産投資',
-    '個別株',
-    '投資初心者',
-    '資産管理',
-    '家計管理',
-    '老後資金',
-    '保険',
-    '年金',
-    '投資家',
+    'スキルアップ',
+    '学習',
+    '勉強',
+    '資格',
+    '未経験',
+    '新卒',
+    '中途',
+    'キャリア',
+    '成長',
+    '挑戦',
+    '目標',
+    // ライフスタイル関連キーワード
+    'テレワーク',
+    'リモートワーク',
+    'ワークライフバランス',
+    '働き方',
+    '生産性',
+    '効率化',
+    'ツール',
+    'ガジェット',
+    'Mac',
   ];
 
   // 仕事に悩んでいそうな人を検索するワードリスト
@@ -189,60 +206,8 @@ function logTime(label) {
     '心身 疲労'
   ];
 
-  // お金に困っていそうな人を検索するワードリスト
-  const moneyTroubleSearchWords = [
-    // 生活費・家計の悩み
-    'お金 ない',
-    '生活費 足りない',
-    '家計 苦しい',
-    '支払い 困難',
-    '借金',
-    'ローン 返済',
-    'クレジットカード 支払い',
-    '家賃 払えない',
-    '光熱費 払えない',
-    '給料 安い',
-    '収入 減った',
-    '副業 探し',
-    'アルバイト 探し',
-    '節約 生活',
-    '貯金 できない',
-    '貯金 ゼロ',
-    '貯金 少ない',
-    '急な出費',
-    '医療費 困る',
-    '教育費 困る',
-    '子供 学費',
-    '奨学金 返済',
-    '生活保護 申請',
-    '失業',
-    '無職',
-    '転職 活動中',
-    'パート 探し',
-    'シングルマザー お金',
-    'シングルファーザー お金',
-    '老後資金 不安',
-    '年金 少ない',
-    '年金 不安',
-    '物価 高い',
-    'インフレ 困る',
-    'ガス代 高い',
-    '電気代 高い',
-    '食費 高い',
-    '家計 見直し',
-    '生活 苦しい',
-    '生活 困窮',
-    '生活 苦労',
-    '生活 苦しい',
-    '生活 苦しい'
-  ];
-
-  // 3つのリストを結合
-  const searchWords = [
-    ...baseSearchWords,
-    ...workTroubleSearchWords,
-    ...moneyTroubleSearchWords
-  ];
+  // 両方のリストを結合
+  const searchWords = [...baseSearchWords, ...workTroubleSearchWords];
 
   // 1日あたりの実行回数（例: 3時間ごと=8回）
   const runsPerDay = 8;
@@ -274,7 +239,6 @@ function logTime(label) {
 
   // ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
-  /*
   logTime('対象ページへ遷移開始');
   await page.goto(targetUrl, { waitUntil: 'networkidle2' });
   logTime('対象ページ遷移完了');
@@ -289,7 +253,6 @@ function logTime(label) {
     await new Promise(resolve => setTimeout(resolve, 1500));
   }
   logTime('記事一覧ページでスクロール完了');
-  */
 
   // クリエイターリンクの取得セレクターを指定
   let creatorLinkTargetSelector
