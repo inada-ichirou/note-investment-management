@@ -10,7 +10,7 @@ dotenv.config();
 import puppeteer from 'puppeteer';
 // import fs from 'fs';
 // import path from 'path';
-import fetch from 'node-fetch';
+import axios from 'axios';
 // const { execSync } = require('child_process');
 
 const API_KEY = process.env.OPENROUTER_API_KEY;
@@ -171,53 +171,39 @@ export async function generateArticle(topic, pattern) {
       } else {
         console.log('API_KEYが未設定です');
       }
-      const res = await fetch(API_URL, {
-        method: 'POST',
+      const res = await axios.post(API_URL, {
+        model: MODEL,
+        messages,
+        max_tokens: 1200,
+        temperature: 0.7
+      }, {
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages,
-          max_tokens: 1200,
-          temperature: 0.7
-        })
+        }
       });
-      
-      const data = await res.json();
-      
-      // エラーハンドリング
-      if (!res.ok) {
-        console.error('OpenRouter API Error (generateArticle):', JSON.stringify(data, null, 2));
-        console.error('Response status:', res.status);
-        console.error('Response headers:', Object.fromEntries(res.headers.entries()));
-        throw new Error(`OpenRouter API error: ${res.status} - ${data.error?.message || 'Unknown error'}`);
-      }
-      
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+
+      const data = res?.data;
+
+      if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
         console.error('Invalid response format (generateArticle) - Full response:', JSON.stringify(data, null, 2));
         console.error('Response structure check:');
-        console.error('- data.choices exists:', !!data.choices);
-        console.error('- data.choices is array:', Array.isArray(data.choices));
-        console.error('- data.choices[0] exists:', !!data.choices?.[0]);
-        console.error('- data.choices[0].message exists:', !!data.choices?.[0]?.message);
-        throw new Error(`Invalid response format from OpenRouter API - Status: ${res.status}, Response: ${JSON.stringify(data)}`);
+        console.error('- data exists:', !!data);
+        console.error('- data.choices exists:', !!data?.choices);
+        console.error('- data.choices is array:', Array.isArray(data?.choices));
+        console.error('- data.choices[0] exists:', !!data?.choices?.[0]);
+        console.error('- data.choices[0].message exists:', !!data?.choices?.[0]?.message);
+        throw new Error('Invalid response format from OpenRouter API');
       }
-      
-      // console.log("AI記事生成APIリクエスト-res", res)
-      // console.log("AI記事生成APIリクエスト-res.data.choices[0].message.content", data.choices[0].message.content)
-      // console.log("AI記事生成APIリクエスト-res.data.choices", data.choices)
 
-      // これがレスポンスの中身
       return data.choices[0].message.content.trim();
     } catch (e) {
       lastError = e;
       console.error(`AI記事生成APIエラー（${tryCount}回目）:`, e.message);
       if (e.response) {
         console.error('APIレスポンスstatus:', e.response.status);
-        console.error('APIレスポンスdata:', JSON.stringify(e.response.data));
-        console.error('APIレスポンスheaders:', JSON.stringify(e.response.headers));
+        try { console.error('APIレスポンスdata:', JSON.stringify(e.response.data)); } catch (_) { console.error('APIレスポンスdata: [stringify失敗]'); }
+        try { console.error('APIレスポンスheaders:', JSON.stringify(e.response.headers)); } catch (_) { console.error('APIレスポンスheaders: [stringify失敗]'); }
       } else if (e.request) {
         console.error('APIリクエスト自体が失敗:', e.request);
       } else {
@@ -294,40 +280,46 @@ export async function rewriteSection(heading, body, API_URL, API_KEY, MODEL) {
     { role: 'system', content: 'あなたは日本語のnote記事編集者です。' },
     { role: 'user', content: promptHeader }
   ];
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages,
-      max_tokens: 600,
-      temperature: 0.7
-    })
-  });
-  const data = await res.json();
-  
-  // エラーハンドリング
-  if (!res.ok) {
-    console.error('OpenRouter API Error:', JSON.stringify(data, null, 2));
-    console.error('Response status:', res.status);
-    console.error('Response headers:', Object.fromEntries(res.headers.entries()));
-    throw new Error(`OpenRouter API error: ${res.status} - ${data.error?.message || 'Unknown error'}`);
+  let tryCount = 0;
+  let lastError = null;
+  while (tryCount < 3) {
+    tryCount++;
+    try {
+      const res = await axios.post(API_URL, {
+        model: MODEL,
+        messages,
+        max_tokens: 600,
+        temperature: 0.7
+      }, {
+        headers: {
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = res?.data;
+
+      if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('Invalid response format (rewriteSection) - Full response:', JSON.stringify(data, null, 2));
+        throw new Error('Invalid response format from OpenRouter API');
+      }
+      return data.choices[0].message.content.trim();
+    } catch (e) {
+      lastError = e;
+      console.error(`rewriteSection: API呼び出しでエラー（${tryCount}回目）:`, e.message);
+      const status = e?.response?.status;
+      if (status) console.error('rewriteSection e.response.status:', status);
+      if (e.response) {
+        try { console.error('rewriteSection e.response.data:', JSON.stringify(e.response.data)); } catch (_) { console.error('rewriteSection e.response.data: [stringify失敗]'); }
+      }
+      if (tryCount < 3) {
+        const backoffMs = 1000 * tryCount;
+        console.log(`${backoffMs}ms 待機してリトライします...`);
+        await new Promise(r => setTimeout(r, backoffMs));
+      }
+    }
   }
-  
-  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-    console.error('Invalid response format - Full response:', JSON.stringify(data, null, 2));
-    console.error('Response structure check:');
-    console.error('- data.choices exists:', !!data.choices);
-    console.error('- data.choices is array:', Array.isArray(data.choices));
-    console.error('- data.choices[0] exists:', !!data.choices?.[0]);
-    console.error('- data.choices[0].message exists:', !!data.choices?.[0]?.message);
-    throw new Error(`Invalid response format from OpenRouter API - Status: ${res.status}, Response: ${JSON.stringify(data)}`);
-  }
-  
-  return data.choices[0].message.content.trim();
+  throw new Error('rewriteSection: 3回連続で失敗しました: ' + (lastError && lastError.message));
 }
 
 // 記事末尾にタグを自動付与
@@ -346,39 +338,47 @@ export async function generateTagsFromContent(content, API_URL, API_KEY, MODEL) 
     { role: 'system', content: 'あなたは日本語のnote記事編集者です。' },
     { role: 'user', content: prompt }
   ];
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages,
-      max_tokens: 100,
-      temperature: 0.5
-    })
-  });
-  const data = await res.json();
-  
-  // エラーハンドリング
-  if (!res.ok) {
-    console.error('OpenRouter API Error (generateTags):', JSON.stringify(data, null, 2));
-    console.error('Response status:', res.status);
-    throw new Error(`OpenRouter API error: ${res.status} - ${data.error?.message || 'Unknown error'}`);
+  let tryCount = 0;
+  let lastError = null;
+  while (tryCount < 3) {
+    tryCount++;
+    try {
+      const res = await axios.post(API_URL, {
+        model: MODEL,
+        messages,
+        max_tokens: 100,
+        temperature: 0.5
+      }, {
+        headers: {
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = res?.data;
+
+      if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('Invalid response format (generateTags) - Full response:', JSON.stringify(data, null, 2));
+        throw new Error('Invalid response format from OpenRouter API');
+      }
+
+      return data.choices[0].message.content.trim();
+    } catch (e) {
+      lastError = e;
+      console.error(`generateTagsFromContent: API呼び出しでエラー（${tryCount}回目）:`, e.message);
+      const status = e?.response?.status;
+      if (status) console.error('generateTagsFromContent e.response.status:', status);
+      if (e.response) {
+        try { console.error('generateTagsFromContent e.response.data:', JSON.stringify(e.response.data)); } catch (_) { console.error('generateTagsFromContent e.response.data: [stringify失敗]'); }
+      }
+      if (tryCount < 3) {
+        const backoffMs = 1000 * tryCount;
+        console.log(`${backoffMs}ms 待機してリトライします...`);
+        await new Promise(r => setTimeout(r, backoffMs));
+      }
+    }
   }
-  
-  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-    console.error('Invalid response format (generateTags) - Full response:', JSON.stringify(data, null, 2));
-    console.error('Response structure check:');
-    console.error('- data.choices exists:', !!data.choices);
-    console.error('- data.choices is array:', Array.isArray(data.choices));
-    console.error('- data.choices[0] exists:', !!data.choices?.[0]);
-    console.error('- data.choices[0].message exists:', !!data.choices?.[0]?.message);
-    throw new Error(`Invalid response format from OpenRouter API - Status: ${res.status}, Response: ${JSON.stringify(data)}`);
-  }
-  
-  return data.choices[0].message.content.trim();
+  throw new Error('generateTagsFromContent: 3回連続で失敗しました: ' + (lastError && lastError.message));
 }
 
 // 200字未満のセクションをリライトし、タグを付与して返す
@@ -406,8 +406,14 @@ export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   let newRaw = safeFirstPart + sections.map(s => '## ' + s.raw).join('\n');
   // 既存タグ行があれば除去
   newRaw = newRaw.replace(/\n# .+$/gm, '');
-  // タグ生成
-  const tags = await generateTagsFromContent(newRaw, API_URL, API_KEY, MODEL);
+  // タグ生成（失敗時のフォールバック付き）
+  let tags = '';
+  try {
+    tags = await generateTagsFromContent(newRaw, API_URL, API_KEY, MODEL);
+  } catch (e) {
+    console.error('タグ生成に失敗しました。フォールバックの固定タグを使用します。理由:', e.message);
+    tags = '#資産運用 #投資 #運用 #株 #投資信託 #FIRE';
+  }
 
   // タグの直前に案内文を追加（日本語コメント付き）
   const infoText = [

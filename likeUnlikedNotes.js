@@ -38,6 +38,7 @@ async function getChromePath() {
   const chromePath = await getChromePath();
   const browser = await puppeteer.launch({
     headless: isCI ? 'old' : false,
+    // protocolTimeout: 120000,
     executablePath: chromePath,
     defaultViewport: null, // ウインドウサイズをargsで指定するためnullに
     args: [
