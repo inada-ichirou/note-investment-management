@@ -37,8 +37,7 @@ async function getChromePath() {
   console.log('isCI:', isCI);
   const chromePath = await getChromePath();
   const browser = await puppeteer.launch({
-    headless: isCI ? 'old' : false,
-    // protocolTimeout: 120000,
+    headless: isCI ? 'new' : false, // 'old'から'new'に変更
     executablePath: chromePath,
     defaultViewport: null, // ウインドウサイズをargsで指定するためnullに
     args: [
@@ -46,7 +45,9 @@ async function getChromePath() {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-gpu',
-      '--disable-dev-shm-usage'
+      '--disable-dev-shm-usage',
+      '--disable-web-security', // CI環境での安定性向上
+      '--disable-features=VizDisplayCompositor' // CI環境での安定性向上
     ]
   });
   const page = await browser.newPage();
@@ -264,13 +265,36 @@ async function getChromePath() {
     await page.evaluate(() => {
       window.scrollTo(0, document.body.scrollHeight);
     });
-    await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5秒待機
+    // CI環境ではより長い待機時間を設定
+    const scrollWaitTime = isCI ? 2500 : 1500;
+    await new Promise(resolve => setTimeout(resolve, scrollWaitTime));
   }
   console.log('スクロール完了');
+  
+  // スクロール完了後の追加待機（CI環境での安定性向上）
+  if (isCI) {
+    console.log('CI環境のため、スクロール完了後に追加待機します');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+
+  // ページの読み込み完了を待機
+  console.log('ページの読み込み完了を待機します');
+  await new Promise(resolve => setTimeout(resolve, isCI ? 5000 : 2000));
 
   // 「スキ」ボタン（button要素）をすべて取得
-  const likeButtons = await page.$$('button[aria-label="スキ"]');
+  let likeButtons = await page.$$('button[aria-label="スキ"]');
   console.log('取得した「スキ」ボタン数:', likeButtons.length);
+  
+  // CI環境でボタンが取得できない場合の再試行
+  if (isCI && likeButtons.length === 0) {
+    console.log('CI環境でボタンを取得できませんでした。再試行します');
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    const retryButtons = await page.$$('button[aria-label="スキ"]');
+    if (retryButtons.length > 0) {
+      console.log(`再試行でボタンを取得しました: ${retryButtons.length}件`);
+      likeButtons = retryButtons;
+    }
+  }
 
   const maxLikes = 24;
   const likeCount = Math.min(maxLikes, likeButtons.length);
@@ -307,13 +331,23 @@ async function getChromePath() {
     // クリック（ElementHandle.click()で本当のユーザー操作をエミュレート）
     console.log('クリック前: ElementHandle.click()実行');
     await btn.click({ delay: 100 });
+    
+    // CI環境ではより長い待機時間を設定
+    const waitTime = isCI ? 2000 : 500;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+    
     // クリック後、aria-pressedがtrueになるまで待機
     await page.waitForFunction(
       el => el.getAttribute('aria-pressed') === 'true',
-      { timeout: 5000 },
+      { timeout: 10000 }, // タイムアウトを10秒に延長
       btn
     );
     console.log('クリック後: aria-pressedがtrueになったことを確認');
+    
+    // 追加の待機時間（CI環境での安定性向上）
+    if (isCI) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
   }
   console.log('クリック処理が全て完了しました');
 
