@@ -301,47 +301,117 @@ function logTime(label) {
       // 検索結果ページの各クリエイター要素を再取得
       const userWrappers = await page.$$('.o-largeNoteSummary__userWrapper');
       if (!userWrappers[i]) continue;
-      // aタグを取得してhover
-      const aTag = await userWrappers[i].$('a.o-largeNoteSummary__user');
-      if (!aTag) continue;
-      await aTag.hover();
-      // ホバー後に明示的な待機時間を追加（ポップアップが見やすくなるように）
-      await new Promise(resolve => setTimeout(resolve, 800)); // 0.8秒待機
-      // await new Promise(resolve => setTimeout(resolve, 2000)); // 2秒待機
-      // ポップアップが出るまで待機（最大2.5秒に延長）
-      await page.waitForSelector('.o-quickLook', { visible: true, timeout: 2500 });
-      // ポップアップ内のフォローボタンを取得
-      const followBtn = await page.$('.o-quickLook .a-button');
-      if (!followBtn) {
-        logTime('フォローボタンが見つかりませんでした');
-        continue;
+      
+      // ユーザー名要素を取得してhover
+      const userNameElement = await userWrappers[i].$('.o-largeNoteSummary__userName');
+      if (!userNameElement) continue;
+      
+      // より確実なホバー操作
+      await userNameElement.hover();
+      
+      // ホバー後に明示的な待機時間を追加（ポップアップが表示されるまで）
+      await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5秒待機
+      
+      // ポップアップが出るまで待機（最大3秒に延長）
+      let popupVisible = false;
+      try {
+        await page.waitForSelector('.o-quickLook', { visible: true, timeout: 3000 });
+        popupVisible = true;
+      } catch (timeoutError) {
+        logTime('ポップアップが表示されませんでした。代替方法を試します。');
+        popupVisible = false;
       }
-      // ボタンのテキストが「フォロー」か確認
-      const btnText = await followBtn.evaluate(el => el.innerText.trim());
-      if (btnText === 'フォロー') {
-        await followBtn.click();
-        // 状態変化を待つ（「フォロー中」になるまで or 最大1.5秒）
-        await Promise.race([
-          page.waitForFunction(
-            () => {
-              const btn = document.querySelector('.o-quickLook .a-button');
-              return btn && btn.innerText.trim() === 'フォロー中';
-            },
-            { timeout: 1500 }
-          ),
-          new Promise(resolve => setTimeout(resolve, 1500))
-        ]);
-        logTime(`ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー`);
-        logTime(`フォロー成功！！（${followCount + 1}件目）｜クリエイター名（${name}）`);
-        logTime(`ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー`);
-        followCount++;
+      
+      if (popupVisible) {
+        // ポップアップ内のフォローボタンを取得
+        const followBtn = await page.$('.o-quickLook .a-button');
+        if (!followBtn) {
+          logTime('フォローボタンが見つかりませんでした');
+          continue;
+        }
+        
+        // ボタンのテキストが「フォロー」か確認
+        const btnText = await followBtn.evaluate(el => el.innerText.trim());
+        if (btnText === 'フォロー') {
+          await followBtn.click();
+          logTime(`フォローボタンをクリックしました`);
+          
+          // 状態変化を待つ（「フォロー中」になるまで or 最大2秒）
+          try {
+            await Promise.race([
+              page.waitForFunction(
+                () => {
+                  const btn = document.querySelector('.o-quickLook .a-button');
+                  return btn && btn.innerText.trim() === 'フォロー中';
+                },
+                { timeout: 2000 }
+              ),
+              new Promise(resolve => setTimeout(resolve, 2000))
+            ]);
+            
+            logTime(`ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー`);
+            logTime(`フォロー成功！！（${followCount + 1}件目）｜クリエイター名（${name}）`);
+            logTime(`ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー`);
+            followCount++;
+          } catch (stateChangeError) {
+            logTime(`フォロー状態の変更を確認できませんでした: ${stateChangeError.message}`);
+            // フォローは成功している可能性があるので、カウントを増やす
+            followCount++;
+          }
+        } else {
+          logTime(`すでにフォロー済み、またはボタン状態が「${btnText}」です`);
+        }
       } else {
-        logTime('すでにフォロー済み、またはボタン状態が「フォロー」ではありません');
+        // ポップアップが表示されない場合の代替方法：直接ユーザーページにアクセス
+        try {
+          logTime('代替方法：直接ユーザーページでフォローを試行します');
+          
+          // ユーザーリンクを取得
+          const userLink = await userWrappers[i].$('a.o-largeNoteSummary__user');
+          if (!userLink) {
+            logTime('ユーザーリンクが見つかりませんでした');
+            continue;
+          }
+          
+          const userUrl = await userLink.evaluate(el => el.href);
+          logTime(`ユーザーページに遷移: ${userUrl}`);
+          
+          // 新しいタブでユーザーページを開く
+          const userPage = await browser.newPage();
+          await userPage.goto(userUrl, { waitUntil: 'networkidle2' });
+          
+          // フォローボタンを探す
+          const followButton = await userPage.$('button[data-testid="follow-button"], .a-button, button:contains("フォロー")');
+          if (followButton) {
+            const buttonText = await followButton.evaluate(el => el.innerText.trim());
+            if (buttonText === 'フォロー') {
+              await followButton.click();
+              logTime(`直接フォロー成功！！（${followCount + 1}件目）｜クリエイター名（${name}）`);
+              followCount++;
+            } else {
+              logTime(`すでにフォロー済み（ボタンテキスト: ${buttonText}）`);
+            }
+          } else {
+            logTime('フォローボタンが見つかりませんでした');
+          }
+          
+          // ユーザーページを閉じる
+          await userPage.close();
+          
+        } catch (alternativeError) {
+          logTime(`代替方法でもエラーが発生: ${alternativeError.message}`);
+        }
       }
-      // 少し待ってから次へ（0.3秒）
-      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // ポップアップを閉じるために少し待機
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 次のクリエイター処理前に少し待機
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
     } catch (e) {
       logTime(`エラー発生: ${e.message}`);
+      // エラーが発生しても次のクリエイターに進む
       continue;
     }
   }
