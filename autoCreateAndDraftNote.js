@@ -40,6 +40,12 @@ console.log('APIキーに空白が含まれているか:', API_KEY.includes(' ')
 console.log('APIキーに改行が含まれているか:', API_KEY.includes('\n'));
 console.log('APIキーにタブが含まれているか:', API_KEY.includes('\t'));
 
+// APIキーの形式検証
+if (!API_KEY.startsWith('sk-or-v1-')) {
+  console.error('警告: APIキーが正しい形式ではありません。sk-or-v1-で始まる必要があります。');
+}
+
+// MODEL定数を先に定義
 // const MODEL = 'google/gemini-pro'; // 必要に応じて変更
 // const MODEL = 'google/gemini-2.5-pro-exp-03-25';
 
@@ -56,6 +62,54 @@ console.log('APIキーにタブが含まれているか:', API_KEY.includes('\t'
 // ↓少し遅いがまあまあ文章作成能力も高そう
 export const MODEL = 'deepseek/deepseek-chat-v3-0324:free';
 
+// 簡単なAPI接続テスト
+console.log('=== API接続テスト ===');
+
+// 環境変数でAPI接続テストをスキップ可能
+if (process.env.SKIP_API_TEST === 'true') {
+  console.log('SKIP_API_TEST=true のため、API接続テストをスキップします');
+} else {
+  try {
+    console.log('API接続テスト開始...');
+    console.log('使用モデル:', MODEL);
+    console.log('API URL:', API_URL);
+    
+    const testResponse = await axios.post(API_URL, {
+      model: MODEL,
+      messages: [{ role: 'user', content: 'こんにちは' }],
+      max_tokens: 10
+    }, {
+      headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 30000 // 30秒に延長
+    });
+    console.log('API接続テスト: 成功 ✅');
+    console.log('レスポンス時間:', testResponse.headers['x-request-id'] ? '正常' : '不明');
+  } catch (e) {
+    console.error('API接続テスト: 失敗 ❌');
+    console.error('エラー詳細:', e.message);
+    
+    if (e.code === 'ECONNABORTED') {
+      console.error('タイムアウトエラー: 30秒以内にレスポンスがありませんでした');
+      console.error('考えられる原因:');
+      console.error('1. ネットワーク接続が遅い');
+      console.error('2. OpenRouterサーバーの応答が遅い');
+      console.error('3. モデルが一時的に利用できない');
+    }
+    
+    if (e.response) {
+      console.error('ステータス:', e.response.status);
+      console.error('レスポンス:', e.response.data);
+    } else if (e.request) {
+      console.error('リクエストは送信されたがレスポンスが受信されませんでした');
+    }
+    
+    console.error('API接続テストをスキップして処理を継続します...');
+    // テスト失敗でも処理を継続（exitしない）
+  }
+}
 
 // const POSTS_DIR = 'posts';
 // const SHEET_PATH = '投稿一覧管理表.md';
@@ -231,9 +285,18 @@ export async function generateArticle(topic, pattern) {
 import { login, goToNewPost, dragAndDropToAddButton, fillArticle, saveDraft, closeDialogs } from './noteAutoDraftAndSheetUpdate.js';
 
 export function splitSections(raw) {
+  console.log('=== splitSections開始 ===');
+  console.log('元の記事の長さ:', raw.length);
+  console.log('元の記事の先頭100文字:', raw.substring(0, 100));
+  
   const parts = raw.split(/^##+ /m); // 2個以上の#で分割
+  console.log('分割後のパーツ数:', parts.length);
+  
   const firstPart = parts[0];
-  const sections = parts.slice(1).map((section) => {
+  console.log('firstPartの長さ:', firstPart.length);
+  console.log('firstPartの内容:', firstPart);
+  
+  const sections = parts.slice(1).map((section, index) => {
     const lines = section.split('\n');
     const heading = lines[0].trim();
     let body = '';
@@ -241,8 +304,11 @@ export function splitSections(raw) {
       if (/^##+ /.test(lines[i]) || lines[i].startsWith('---')) break;
       body += lines[i].trim();
     }
+    console.log(`セクション${index + 1}: "${heading}" (本文${body.length}文字)`);
     return { heading, body, raw: section };
   });
+  
+  console.log('=== splitSections完了 ===');
   return { firstPart, sections };
 }
 
@@ -276,10 +342,12 @@ export async function rewriteSection(heading, body, API_URL, API_KEY, MODEL) {
     '',
     `元の本文: ${body}`
   ].join('\n');
+  
   const messages = [
-    { role: 'system', content: 'あなたは日本語のnote記事編集者です。' },
+    { role: 'system', content: 'あなたは日本語の投資記事編集者です。' },
     { role: 'user', content: promptHeader }
   ];
+  
   let tryCount = 0;
   let lastError = null;
   while (tryCount < 3) {
@@ -294,7 +362,8 @@ export async function rewriteSection(heading, body, API_URL, API_KEY, MODEL) {
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 30000 // 30秒のタイムアウト
       });
 
       const data = res?.data;
@@ -307,11 +376,25 @@ export async function rewriteSection(heading, body, API_URL, API_KEY, MODEL) {
     } catch (e) {
       lastError = e;
       console.error(`rewriteSection: API呼び出しでエラー（${tryCount}回目）:`, e.message);
-      const status = e?.response?.status;
-      if (status) console.error('rewriteSection e.response.status:', status);
+      
+      // より詳細なエラー情報を出力
       if (e.response) {
-        try { console.error('rewriteSection e.response.data:', JSON.stringify(e.response.data)); } catch (_) { console.error('rewriteSection e.response.data: [stringify失敗]'); }
+        console.error('rewriteSection e.response.status:', e.response.status);
+        console.error('rewriteSection e.response.statusText:', e.response.statusText);
+        console.error('rewriteSection e.response.headers:', JSON.stringify(e.response.headers, null, 2));
+        try { 
+          console.error('rewriteSection e.response.data:', JSON.stringify(e.response.data, null, 2)); 
+        } catch (_) { 
+          console.error('rewriteSection e.response.data: [stringify失敗]'); 
+        }
+      } else if (e.request) {
+        console.error('rewriteSection: リクエストは送信されたがレスポンスが受信されませんでした');
+        console.error('rewriteSection e.request:', e.request);
+      } else {
+        console.error('rewriteSection: リクエスト設定時にエラーが発生しました');
+        console.error('rewriteSection e.config:', e.config);
       }
+      
       if (tryCount < 3) {
         const backoffMs = 1000 * tryCount;
         console.log(`${backoffMs}ms 待機してリトライします...`);
@@ -352,7 +435,8 @@ export async function generateTagsFromContent(content, API_URL, API_KEY, MODEL) 
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 30000 // 30秒のタイムアウト
       });
 
       const data = res?.data;
@@ -385,31 +469,80 @@ export async function generateTagsFromContent(content, API_URL, API_KEY, MODEL) 
 export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   let { firstPart, sections } = splitSections(raw);
   let updated = false;
+  
   // 200字未満のセクションをリライト
   for (let i = 0; i < sections.length; i++) {
     const { heading, body, raw: sectionRaw } = sections[i];
     if (body.length < 200) {
       console.log(`「${heading}」の本文が${body.length}文字と少なめです。AIでリライトします...`);
-      const newBody = await rewriteSection(heading, body, API_URL, API_KEY, MODEL);
-      const newBodyWithExtraLine = newBody + '\n';
-      const lines = sectionRaw.split('\n');
-      lines.splice(1, lines.length - 1, newBodyWithExtraLine);
-      sections[i].raw = lines.join('\n');
-      updated = true;
       
-      await new Promise(resolve => setTimeout(resolve, 10));
-
+      try {
+        const newBody = await rewriteSection(heading, body, API_URL, API_KEY, MODEL);
+        const newBodyWithExtraLine = newBody + '\n';
+        const lines = sectionRaw.split('\n');
+        lines.splice(1, lines.length - 1, newBodyWithExtraLine);
+        sections[i].raw = lines.join('\n');
+        updated = true;
+        console.log(`「${heading}」のリライトが完了しました`);
+      } catch (e) {
+        console.error(`「${heading}」のリライトに失敗しました:`, e.message);
+        console.log(`「${heading}」は元の内容のまま処理を継続します`);
+        // リライト失敗時は元の内容を保持
+      }
+      
+      // APIリクエストの間に適切な待機時間を設定（レート制限回避）
+      if (i < sections.length - 1) {
+        console.log('次のセクション処理前に2秒待機します...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
     }
   }
-  // firstPartの末尾に必ず改行を追加
+  
+  // マガジンへの誘導セクション（リライト処理の成功・失敗に関係なく必ず挿入）
+  console.log('マガジン誘導セクションを挿入します...');
+  console.log('firstPartの長さ:', firstPart.length);
+  console.log('firstPartの末尾10文字:', firstPart.substring(firstPart.length - 10));
+  console.log('firstPartが改行で終わるか:', firstPart.endsWith('\n'));
+  
+  const magazinePromotion = [
+    '🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　',
+    '',
+    '✅「そろそろ資産運用、何か始めたい！」というあなたへ',
+    '',
+    '投資に興味はあるけど、「何から始めればいい？」「失敗が怖い…」そんな不安を、無料で解消できるマガジンを用意しました。',
+    '',
+    '【早めに不安を払拭する資産運用】',
+    '✔ まずは小さく始めたい',
+    '✔ 仕組みをシンプルに知りたい',
+    'そんな人にピッタリです。',
+    '',
+    '安心して一歩踏み出すヒントを、無料でどうぞ。',
+    '',
+    'https://note.com/investment_happy/m/m76229c09696b',
+    '',
+    '🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　',
+    ''
+  ].join('\n');
+  
+  // firstPartの末尾に必ず改行を追加し、マガジン誘導セクションを挿入
   const safeFirstPart = firstPart.endsWith('\n') ? firstPart : firstPart + '\n';
-  let newRaw = safeFirstPart + sections.map(s => '## ' + s.raw).join('\n');
+  console.log('safeFirstPartの長さ:', safeFirstPart.length);
+  console.log('safeFirstPartの末尾10文字:', safeFirstPart.substring(safeFirstPart.length - 10));
+  
+  let newRaw = safeFirstPart + magazinePromotion + '\n\n' + sections.map(s => '## ' + s.raw).join('\n');
+  console.log('newRawの長さ:', newRaw.length);
+  console.log('newRawの先頭200文字:', newRaw.substring(0, 200));
+  console.log('newRawの末尾200文字:', newRaw.substring(newRaw.length - 200));
+  
   // 既存タグ行があれば除去
   newRaw = newRaw.replace(/\n# .+$/gm, '');
+  
   // タグ生成（失敗時のフォールバック付き）
   let tags = '';
   try {
+    console.log('タグ生成を開始します...');
     tags = await generateTagsFromContent(newRaw, API_URL, API_KEY, MODEL);
+    console.log('タグ生成が完了しました:', tags);
   } catch (e) {
     console.error('タグ生成に失敗しました。フォールバックの固定タグを使用します。理由:', e.message);
     tags = '#資産運用 #投資 #運用 #株 #投資信託 #FIRE';
@@ -420,7 +553,9 @@ export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
     '最後までお読みいただきありがとうございます！💬',
     '継続して、お得な情報を発信していきますので、フォローお願いします！',
   ].join('\n');
-  newRaw = newRaw.trim() + '\n\n' + infoText + '\n\n' + tags + '\n';
+  
+  newRaw = newRaw.trim() + '\n\n' + magazinePromotion + '\n\n' + infoText + '\n\n' + tags + '\n';
+  console.log('記事の加工が完了しました。マガジン誘導セクションとタグが含まれています。');
   return newRaw;
 }
 
@@ -470,8 +605,55 @@ export default async function main() {
   const { title, filteredArticle } = extractTitleAndFilterH1(article);
 
   // 5. 記事リライト・チェック（直接関数で処理）
-  let rewrittenArticle = await rewriteAndTagArticle(filteredArticle, API_URL, API_KEY, MODEL);
-  console.log('記事リライト・チェックが完了しました');
+  let rewrittenArticle;
+  try {
+    rewrittenArticle = await rewriteAndTagArticle(filteredArticle, API_URL, API_KEY, MODEL);
+    console.log('記事リライト・チェックが完了しました');
+  } catch (e) {
+    console.error('記事リライト・チェックでエラーが発生しました:', e.message);
+    console.log('元の記事にマガジン誘導セクションとタグを手動で追加します');
+    
+    console.log('=== 手動マガジン誘導セクション追加開始 ===');
+    console.log('filteredArticleの長さ:', filteredArticle.length);
+    console.log('filteredArticleの先頭200文字:', filteredArticle.substring(0, 200));
+    console.log('filteredArticleの末尾200文字:', filteredArticle.substring(filteredArticle.length - 200));
+    
+    // マガジン誘導セクションを手動で追加
+    const magazinePromotion = [
+      '🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　',
+      '',
+      '✅「そろそろ資産運用、何か始めたい！」というあなたへ',
+      '',
+      '投資に興味はあるけど、「何から始めればいい？」「失敗が怖い…」そんな不安を、無料で解消できるマガジンを用意しました。',
+      '',
+      '【早めに不安を払拭する資産運用】',
+      '✔ まずは小さく始めたい',
+      '✔ 仕組みをシンプルに知りたい',
+      'そんな人にピッタリです。',
+      '',
+      '安心して一歩踏み出すヒントを、無料でどうぞ。',
+      '',
+      'https://note.com/investment_happy/m/m76229c09696b',
+      '',
+      '🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　',
+      ''
+    ].join('\n');
+    
+    const infoText = [
+      '最後までお読みいただきありがとうございます！💬',
+      '継続して、お得な情報を発信していきますので、フォローお願いします！',
+    ].join('\n');
+    
+    const tags = '#資産運用 #投資 #運用 #株 #投資信託 #FIRE';
+    
+    // 元の記事にマガジン誘導セクションとタグを追加
+    rewrittenArticle = filteredArticle.trim() + '\n\n' + magazinePromotion + '\n\n' + infoText + '\n\n' + tags + '\n';
+    console.log('手動でマガジン誘導セクションとタグを追加しました');
+    console.log('rewrittenArticleの長さ:', rewrittenArticle.length);
+    console.log('rewrittenArticleの先頭200文字:', rewrittenArticle.substring(0, 200));
+    console.log('rewrittenArticleの末尾200文字:', rewrittenArticle.substring(rewrittenArticle.length - 200));
+    console.log('=== 手動マガジン誘導セクション追加完了 ===');
+  }
 
   // 6. note.comに下書き保存（Puppeteerで自動化）
   try {
