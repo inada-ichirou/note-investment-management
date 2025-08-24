@@ -1,0 +1,30 @@
+{
+  "displayName": "Monthly Budget",
+  "amount": {
+    "specifiedAmount": {
+      "currencyCode": "USD",
+      "units": "2"
+    }
+  },
+  "budgetFilter": {
+    "projects": ["projects/note-automation-469902"]
+  },
+  "thresholdRules": [
+    {
+      "thresholdPercent": 0.5,
+      "spendBasis": "CURRENT_SPEND"
+    },
+    {
+      "thresholdPercent": 0.8,
+      "spendBasis": "CURRENT_SPEND"
+    },
+    {
+      "thresholdPercent": 1.0,
+      "spendBasis": "CURRENT_SPEND"
+    }
+  ],
+  "notificationsRule": {
+    "monitoringNotificationChannels": [],
+    "disableDefaultIamRecipients": false
+  }
+}

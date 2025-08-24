@@ -1,0 +1,14 @@
+{
+  "name": "note-automation-cloud-run",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "follow": "EXECUTE_DIRECTLY=true node follow/followFromArticles.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "puppeteer": "^24.9.0",
+    "dotenv": "^16.0.0"
+  }
+}
