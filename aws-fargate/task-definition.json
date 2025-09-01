@@ -1,0 +1,48 @@
+{
+  "family": "note-automation-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::848049622898:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::848049622898:role/note-automation-task-role",
+  "containerDefinitions": [
+    {
+      "name": "note-automation-container",
+      "image": "848049622898.dkr.ecr.ap-northeast-1.amazonaws.com/note-automation:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD",
+          "value": "true"
+        },
+        {
+          "name": "PUPPETEER_EXECUTABLE_PATH",
+          "value": "/usr/bin/chromium"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/note-automation",
+          "awslogs-region": "ap-northeast-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "stopTimeout": 120,
+      "startTimeout": 300
+    }
+  ]
+}
+
+
