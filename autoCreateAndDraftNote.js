@@ -545,7 +545,7 @@ export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
     console.log('タグ生成が完了しました:', tags);
   } catch (e) {
     console.error('タグ生成に失敗しました。フォールバックの固定タグを使用します。理由:', e.message);
-    tags = '#資産運用 #投資 #運用 #株 #投資信託 #FIRE';
+    tags = '#資産運用 #投資 #運用 #株 #投資信託 #FIRE #PR';
   }
 
   // タグの直前に案内文を追加（日本語コメント付き）
@@ -554,7 +554,10 @@ export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
     '継続して、お得な情報を発信していきますので、フォローお願いします！',
   ].join('\n');
   
-  newRaw = newRaw.trim() + '\n\n' + magazinePromotion + '\n\n' + infoText + '\n\n' + tags + '\n';
+  // Amazonアソシエイトの適格販売に関する文言を追加
+  const amazonAssociateText = 'Amazon のアソシエイトとして、「まずは100円から💹投資|運用|資産形成」は適格販売により収入を得ています。';
+  
+  newRaw = newRaw.trim() + '\n\n' + magazinePromotion + '\n\n' + infoText + '\n\n' + amazonAssociateText + '\n\n' + tags + '\n';
   console.log('記事の加工が完了しました。マガジン誘導セクションとタグが含まれています。');
   return newRaw;
 }
@@ -644,10 +647,13 @@ export default async function main() {
       '継続して、お得な情報を発信していきますので、フォローお願いします！',
     ].join('\n');
     
-    const tags = '#資産運用 #投資 #運用 #株 #投資信託 #FIRE';
+    const tags = '#資産運用 #投資 #運用 #株 #投資信託 #FIRE #PR';
+    
+    // Amazonアソシエイトの適格販売に関する文言を追加
+    const amazonAssociateText = 'Amazon のアソシエイトとして、「まずは100円から💹投資|運用|資産形成」は適格販売により収入を得ています。';
     
     // 元の記事にマガジン誘導セクションとタグを追加
-    rewrittenArticle = filteredArticle.trim() + '\n\n' + magazinePromotion + '\n\n' + infoText + '\n\n' + tags + '\n';
+    rewrittenArticle = filteredArticle.trim() + '\n\n' + magazinePromotion + '\n\n' + infoText + '\n\n' + amazonAssociateText + '\n\n' + tags + '\n';
     console.log('手動でマガジン誘導セクションとタグを追加しました');
     console.log('rewrittenArticleの長さ:', rewrittenArticle.length);
     console.log('rewrittenArticleの先頭200文字:', rewrittenArticle.substring(0, 200));
