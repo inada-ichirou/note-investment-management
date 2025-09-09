@@ -167,16 +167,80 @@ class AiArticleService
   end
 
   def self.rewrite_and_tag_article(content)
-    # 簡易版の実装（完全版は必要に応じて後で実装）
+    # アフィリエイトリンクを生成
+    affiliate_link = generate_affiliate_link
+    
+    # 記事の最初、中間、最後にアフィリエイトリンクを挿入
+    content_with_affiliate = insert_affiliate_links(content, affiliate_link)
+    
+    # マガジンへの誘導セクション
+    magazine_promotion = [
+      '🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　',
+      '',
+      '✅「そろそろ資産運用、何か始めたい！」というあなたへ',
+      '',
+      '投資に興味はあるけど、「何から始めればいい？」「失敗が怖い…」そんな不安を、無料で解消できるマガジンを用意しました。',
+      '',
+      '【早めに不安を払拭する資産運用】',
+      '✔ まずは小さく始めたい',
+      '✔ 仕組みをシンプルに知りたい',
+      'そんな人にピッタリです。',
+      '',
+      '安心して一歩踏み出すヒントを、無料でどうぞ。',
+      '',
+      'https://note.com/investment_happy/m/m76229c09696b',
+      '',
+      '🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　',
+      ''
+    ].join("\n")
+    
     # 記事末尾にフォロー案内とタグを追加
     info_text = [
       '最後までお読みいただきありがとうございます！💬',
       '継続して、お得な情報を発信していきますので、フォローお願いします！'
     ].join("\n")
     
-    # 簡易的なタグ生成
-    tags = '#投資 #資産運用 #初心者 #FIRE #投資信託'
+    # Amazonアソシエイトの適格販売に関する文言を追加
+    amazon_associate_text = 'Amazon のアソシエイトとして、「まずは100円から💹投資|運用|資産形成」は適格販売により収入を得ています。'
     
-    "#{content.strip}\n\n#{info_text}\n\n#{tags}\n"
+    # 簡易的なタグ生成
+    tags = '#投資 #資産運用 #初心者 #FIRE #投資信託 #PR'
+    
+    "#{content_with_affiliate.strip}\n\n#{magazine_promotion}\n\n#{info_text}\n\n#{amazon_associate_text}\n\n#{tags}\n"
+  end
+
+  def self.generate_affiliate_link
+    [
+      '💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰　💎',
+      '',
+      '@https://amzn.to/41MwWSl',
+      '',
+      '↑お金のことを広く学ぶのに最適です！コスパ最高です😊',
+      '',
+      '💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰　💎',
+      ''
+    ].join("\n")
+  end
+
+  def self.insert_affiliate_links(content, affiliate_link)
+    # 記事を段落に分割
+    paragraphs = content.split("\n\n")
+    
+    if paragraphs.length < 3
+      # 段落が少ない場合は、最初と最後に挿入
+      return paragraphs[0] + "\n\n" + affiliate_link + "\n\n" + paragraphs.slice(1..-1).join("\n\n") + "\n\n" + affiliate_link
+    end
+    
+    # 最初の段落の後にアフィリエイトリンクを挿入
+    first_part = paragraphs[0] + "\n\n" + affiliate_link
+    
+    # 中間の段落を特定（全体の1/3から2/3の位置）
+    middle_index = (paragraphs.length * 0.4).floor
+    middle_part = paragraphs.slice(1, middle_index - 1).join("\n\n") + "\n\n" + affiliate_link + "\n\n" + paragraphs.slice(middle_index, -2).join("\n\n")
+    
+    # 最後の段落の後にアフィリエイトリンクを挿入
+    last_part = paragraphs[-1] + "\n\n" + affiliate_link
+    
+    [first_part, middle_part, last_part].join("\n\n")
   end
 end

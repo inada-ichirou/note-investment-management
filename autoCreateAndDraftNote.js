@@ -465,6 +465,43 @@ export async function generateTagsFromContent(content, API_URL, API_KEY, MODEL) 
   throw new Error('generateTagsFromContent: 3回連続で失敗しました: ' + (lastError && lastError.message));
 }
 
+// アフィリエイトリンクを生成する関数
+function generateAffiliateLink() {
+  return [
+    '',
+    '💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰',
+    'https://amzn.to/41MwWSl',
+    '👆お金のことを広く学ぶのに最適です！コスパ最高です😊',
+    '💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰　💎　💰',
+    '',
+  ].join('\n');
+}
+
+// 記事の最初、中間、最後にアフィリエイトリンクを挿入する関数
+function insertAffiliateLinks(content) {
+  const affiliateLink = generateAffiliateLink();
+  
+  // 記事を段落に分割
+  const paragraphs = content.split('\n\n');
+  
+  if (paragraphs.length < 3) {
+    // 段落が少ない場合は、最初と最後に挿入
+    return paragraphs[0] + '\n\n' + affiliateLink + '\n\n' + paragraphs.slice(1).join('\n\n') + '\n\n' + affiliateLink;
+  }
+  
+  // 最初の段落の後にアフィリエイトリンクを挿入
+  const firstPart = paragraphs[0] + '\n\n' + affiliateLink;
+  
+  // 中間の段落を特定（全体の1/3から2/3の位置）
+  const middleIndex = Math.floor(paragraphs.length * 0.4);
+  const middlePart = paragraphs.slice(1, middleIndex).join('\n\n') + '\n\n' + affiliateLink + '\n\n' + paragraphs.slice(middleIndex, -1).join('\n\n');
+  
+  // 最後の段落の後にアフィリエイトリンクを挿入
+  const lastPart = paragraphs[paragraphs.length - 1] + '\n\n' + affiliateLink;
+  
+  return [firstPart, middlePart, lastPart].join('\n\n');
+}
+
 // 200字未満のセクションをリライトし、タグを付与して返す
 export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   let { firstPart, sections } = splitSections(raw);
@@ -498,11 +535,23 @@ export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
     }
   }
   
+  // 記事の最初、中間、最後にアフィリエイトリンクを挿入
+  console.log('アフィリエイトリンクを3箇所に挿入します...');
+  
+  // firstPartの末尾に必ず改行を追加
+  const safeFirstPart = firstPart.endsWith('\n') ? firstPart : firstPart + '\n';
+  
+  // セクションを結合して記事全体を作成
+  let articleContent = safeFirstPart + '\n\n' + sections.map(s => '## ' + s.raw).join('\n');
+  
+  // アフィリエイトリンクを3箇所に挿入
+  articleContent = insertAffiliateLinks(articleContent);
+  
+  console.log('アフィリエイトリンク挿入完了');
+  console.log('articleContentの長さ:', articleContent.length);
+  
   // マガジンへの誘導セクション（リライト処理の成功・失敗に関係なく必ず挿入）
   console.log('マガジン誘導セクションを挿入します...');
-  console.log('firstPartの長さ:', firstPart.length);
-  console.log('firstPartの末尾10文字:', firstPart.substring(firstPart.length - 10));
-  console.log('firstPartが改行で終わるか:', firstPart.endsWith('\n'));
   
   const magazinePromotion = [
     '🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　',
@@ -524,24 +573,14 @@ export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
     ''
   ].join('\n');
   
-  // firstPartの末尾に必ず改行を追加し、マガジン誘導セクションを挿入
-  const safeFirstPart = firstPart.endsWith('\n') ? firstPart : firstPart + '\n';
-  console.log('safeFirstPartの長さ:', safeFirstPart.length);
-  console.log('safeFirstPartの末尾10文字:', safeFirstPart.substring(safeFirstPart.length - 10));
-  
-  let newRaw = safeFirstPart + magazinePromotion + '\n\n' + sections.map(s => '## ' + s.raw).join('\n');
-  console.log('newRawの長さ:', newRaw.length);
-  console.log('newRawの先頭200文字:', newRaw.substring(0, 200));
-  console.log('newRawの末尾200文字:', newRaw.substring(newRaw.length - 200));
-  
   // 既存タグ行があれば除去
-  newRaw = newRaw.replace(/\n# .+$/gm, '');
+  articleContent = articleContent.replace(/\n# .+$/gm, '');
   
   // タグ生成（失敗時のフォールバック付き）
   let tags = '';
   try {
     console.log('タグ生成を開始します...');
-    tags = await generateTagsFromContent(newRaw, API_URL, API_KEY, MODEL);
+    tags = await generateTagsFromContent(articleContent, API_URL, API_KEY, MODEL);
     console.log('タグ生成が完了しました:', tags);
   } catch (e) {
     console.error('タグ生成に失敗しました。フォールバックの固定タグを使用します。理由:', e.message);
@@ -557,9 +596,9 @@ export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
   // Amazonアソシエイトの適格販売に関する文言を追加
   const amazonAssociateText = 'Amazon のアソシエイトとして、「まずは100円から💹投資|運用|資産形成」は適格販売により収入を得ています。';
   
-  newRaw = newRaw.trim() + '\n\n' + magazinePromotion + '\n\n' + infoText + '\n\n' + amazonAssociateText + '\n\n' + tags + '\n';
-  console.log('記事の加工が完了しました。マガジン誘導セクションとタグが含まれています。');
-  return newRaw;
+  const finalContent = articleContent.trim() + '\n\n' + magazinePromotion + '\n\n' + infoText + '\n\n' + amazonAssociateText + '\n\n' + tags + '\n';
+  console.log('記事の加工が完了しました。アフィリエイトリンク、マガジン誘導、タグが含まれています。');
+  return finalContent;
 }
 
 /**
@@ -621,7 +660,11 @@ export default async function main() {
     console.log('filteredArticleの先頭200文字:', filteredArticle.substring(0, 200));
     console.log('filteredArticleの末尾200文字:', filteredArticle.substring(filteredArticle.length - 200));
     
-    // マガジン誘導セクションを手動で追加
+    // アフィリエイトリンクを3箇所に挿入
+    console.log('手動でアフィリエイトリンクを3箇所に挿入します...');
+    rewrittenArticle = insertAffiliateLinks(filteredArticle);
+    
+    // マガジンへの誘導セクションを手動で追加
     const magazinePromotion = [
       '🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　🐾　🐈　🐾　🐈‍⬛　',
       '',
@@ -652,8 +695,8 @@ export default async function main() {
     // Amazonアソシエイトの適格販売に関する文言を追加
     const amazonAssociateText = 'Amazon のアソシエイトとして、「まずは100円から💹投資|運用|資産形成」は適格販売により収入を得ています。';
     
-    // 元の記事にマガジン誘導セクションとタグを追加
-    rewrittenArticle = filteredArticle.trim() + '\n\n' + magazinePromotion + '\n\n' + infoText + '\n\n' + amazonAssociateText + '\n\n' + tags + '\n';
+    // 元の記事にアフィリエイトリンク、マガジン誘導、タグを追加
+    rewrittenArticle = rewrittenArticle.trim() + '\n\n' + magazinePromotion + '\n\n' + infoText + '\n\n' + amazonAssociateText + '\n\n' + tags + '\n';
     console.log('手動でマガジン誘導セクションとタグを追加しました');
     console.log('rewrittenArticleの長さ:', rewrittenArticle.length);
     console.log('rewrittenArticleの先頭200文字:', rewrittenArticle.substring(0, 200));
