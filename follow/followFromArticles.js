@@ -12,6 +12,10 @@ import fs from 'fs';
 
 dotenv.config();
 
+// タイムアウト設定（10分 = 600秒）
+const TIMEOUT_MS = 10 * 60 * 1000; // 10分
+let timeoutId;
+
 // Chromeの実行パスを動的に取得する関数
 async function getChromePath() {
   const isCI = process.env.CI === 'true';
@@ -41,7 +45,17 @@ function logTime(label) {
   console.log(`[${now.toISOString()}] ${label}`);
 }
 
+// タイムアウト処理関数
+function handleTimeout() {
+  console.log('【タイムアウト発生】10分を超えたため処理を強制終了します');
+  process.exit(1);
+}
+
 (async () => {
+  // タイムアウトタイマーを設定
+  timeoutId = setTimeout(handleTimeout, TIMEOUT_MS);
+  console.log(`【タイムアウト設定】${TIMEOUT_MS / 1000}秒後に自動終了します`);
+
   logTime('Puppeteer起動オプションを取得します');
   const isCI = process.env.CI === 'true';
   console.log('process.env.CIの値:', process.env.CI);
@@ -59,14 +73,19 @@ function logTime(label) {
       '--disable-extensions',
       '--window-size=1280,900'
     ],
-    defaultViewport: null
+    defaultViewport: null,
+    // Puppeteerのタイムアウト設定を追加
+    protocolTimeout: 30000, // 30秒
+    timeout: 60000 // 60秒
   });
   logTime('puppeteer.launch 完了');
   
   logTime('新規ページ作成開始');
   const page = await browser.newPage();
   
-
+  // ページのタイムアウト設定を追加
+  page.setDefaultTimeout(30000); // 30秒
+  page.setDefaultNavigationTimeout(30000); // 30秒
   
   logTime('新規ページ作成完了');
 
@@ -84,8 +103,9 @@ function logTime(label) {
       await dialog.dismiss(); // OKボタンを押す
       console.log('【noteフォロー上限に達したため、処理を中断します】');
       isLimit = true; // 上限フラグを立てる
+      clearTimeout(timeoutId); // タイムアウトタイマーをクリア
       await browser.close(); // ブラウザを閉じる
-      // ここでは process.exit(1) を呼ばない
+      process.exit(0); // 正常終了
     } else {
       await dialog.dismiss();
     }
@@ -292,9 +312,17 @@ function logTime(label) {
   console.log('ユニークなクリエイターを', uniqueCreators.length, '件取得しました');
 
   let followCount = 0;
+  const startTime = Date.now(); // 処理開始時間を記録
   // 検索結果ページ上でポップアップのフォローボタンをクリックする方式に変更
   for (let i = 0; i < uniqueCreators.length && followCount < 15; i++) {
     if (isLimit) break; // 上限検知時は即座にループを抜ける
+    
+    // タイムアウトチェック
+    if (Date.now() - startTime > TIMEOUT_MS) {
+      console.log('【タイムアウト検知】処理時間が10分を超えたため処理を中断します');
+      break;
+    }
+    
     const name = uniqueCreators[i].name;
     logTime(`クリエイター${i + 1}のホバー＆ポップアップフォロー処理開始:（${name}）`);
     try {
@@ -416,9 +444,13 @@ function logTime(label) {
     }
   }
   logTime('全フォロー処理完了');
+  
+  // タイムアウトタイマーをクリア
+  clearTimeout(timeoutId);
+  
   // 上限検知時はここで安全に終了
   if (isLimit) {
-    process.exit(1);
+    process.exit(0);
   }
   await browser.close();
   console.log('ブラウザを閉じました');
