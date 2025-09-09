@@ -1,15 +1,15 @@
 name: Auto Publish Notes
 
 on:
-  schedule:
-    # JST 11:45, 17:45, 23:45（UTC換算で2:45, 8:45, 14:45）
+  # schedule:
+  #   # JST 11:45, 17:45, 23:45（UTC換算で2:45, 8:45, 14:45）
 
-    # 検証の為一時的に時間を変更
-    # - cron: '45 4 * * *'   # JST 13:45
+  #   # 検証の為一時的に時間を変更
+  #   # - cron: '45 4 * * *'   # JST 13:45
 
-    - cron: '45 2 * * *' # JST 11:45
-    - cron: '45 8 * * *'   # JST 17:45
-    - cron: '45 14 * * *'  # JST 23:45
+  #   - cron: '45 2 * * *' # JST 11:45
+  #   - cron: '45 8 * * *'   # JST 17:45
+  #   - cron: '45 14 * * *'  # JST 23:45
   workflow_dispatch:
 
 jobs:
