@@ -602,25 +602,55 @@ export async function rewriteAndTagArticle(raw, API_URL, API_KEY, MODEL) {
 }
 
 /**
+ * ランダムな絵文字を選択する関数
+ * @returns {string} ランダムに選択された絵文字
+ */
+function getRandomEmoji() {
+  const emojis = ['❤️', '🌸', '🛑', '㊙︎', '🟥', '🈲', '🉐', '㊗️', '㊙️', '⭕', '‼️', '🎉', '🌸'];
+  return emojis[Math.floor(Math.random() * emojis.length)];
+}
+
+/**
  * 記事本文からタイトルを抽出し、h1タイトル行を除去した本文を返す
  * @param {string} article - 記事本文
  * @returns {{ title: string, filteredArticle: string }}
  */
 export function extractTitleAndFilterH1(article) {
-  let title = '無題';
+  let originalTitle = '無題';
   const titleMatch = article.match(/^#\s*(.+)$/m);
   if (titleMatch && titleMatch[1].trim().length > 0) {
-    title = titleMatch[1].trim();
+    originalTitle = titleMatch[1].trim();
   } else {
     // 先頭行がタイトルでない場合、最初の10文字を仮タイトルに
-    title = article.split('\n').find(line => line.trim().length > 0)?.slice(0, 10) || '無題';
+    originalTitle = article.split('\n').find(line => line.trim().length > 0)?.slice(0, 10) || '無題';
   }
 
-  const h1TitleLine = `# ${title}`;
+  // タイトルの先頭にランダムな絵文字を追加
+  const emoji = getRandomEmoji();
+  const title = `${emoji} ${originalTitle}`;
+
+  // 記事からタイトル関連の行を除去（複数のパターンに対応）
   const articleLines = article.split('\n');
-  console.log('タイトル:', title);
-  console.log('h1TitleLine:', JSON.stringify(h1TitleLine));
-  const filteredArticleLines = articleLines.filter(line => line.trim() !== h1TitleLine);
+  console.log('元のタイトル:', originalTitle);
+  console.log('絵文字付きタイトル:', title);
+  
+  // 除去すべき行のパターン
+  const patternsToRemove = [
+    `# ${originalTitle}`,           // 元のタイトル（H1形式）
+    `# ${title}`,                   // 絵文字付きタイトル（H1形式）
+    originalTitle,                  // 元のタイトル（プレーンテキスト）
+    title,                          // 絵文字付きタイトル（プレーンテキスト）
+    `## ${originalTitle}`,          // 元のタイトル（H2形式）
+    `## ${title}`,                  // 絵文字付きタイトル（H2形式）
+    `### ${originalTitle}`,         // 元のタイトル（H3形式）
+    `### ${title}`                  // 絵文字付きタイトル（H3形式）
+  ];
+
+  const filteredArticleLines = articleLines.filter(line => {
+    const trimmedLine = line.trim();
+    return !patternsToRemove.includes(trimmedLine);
+  });
+  
   const filteredArticle = filteredArticleLines.join('\n');
 
   return { title, filteredArticle };
