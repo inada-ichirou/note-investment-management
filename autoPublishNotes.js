@@ -6,10 +6,15 @@ import { login } from './noteAutoDraftAndSheetUpdate.js';
 dotenv.config();
 
 (async () => {
+  // 実行引数からheadlessを決定（--bg があればheadless、それ以外は可視）
+  const argv = process.argv.slice(2);
+  const wantsBackground = argv.includes('--bg');
   const isCI = process.env.CI === 'true';
+  const headlessMode = wantsBackground ? 'new' : (isCI ? 'old' : false);
+  console.log('headlessモード:', headlessMode === false ? '可視(visible)' : 'バックグラウンド(headless)');
   console.log('Puppeteerを起動します');
   const browser = await puppeteer.launch({
-    headless: isCI ? 'old' : false,
+    headless: headlessMode,
     protocolTimeout: 120000,
     executablePath: isCI ? '/usr/bin/google-chrome-stable' : undefined,
     args: [

@@ -4,8 +4,9 @@ import puppeteer from 'puppeteer';
 dotenv.config();
 
 (async () => {
-  // コマンドライン引数からURLを取得
-  const targetUrl = process.argv[2];
+  // コマンドライン引数からURLを取得（--bgオプションを除外）
+  const argv = process.argv.slice(2);
+  const targetUrl = argv.find(arg => !arg.startsWith('--'));
   
   // デフォルトURL（引数がない場合）
   const defaultUrl = 'https://note.com/enginner_skill';
@@ -25,13 +26,14 @@ dotenv.config();
   }
 
   console.log('Puppeteer起動オプションを取得します');
-  // CI環境（GitHub Actions等）ではheadless:'old'、ローカルではheadless:false
+  // 実行引数からheadlessを決定（--bg があればheadless、それ以外は可視）
+  const wantsBackground = argv.includes('--bg');
   const isCI = process.env.CI === 'true';
-  console.log('process.env.CIの値:', process.env.CI);
-  console.log('isCI:', isCI);
+  const headlessMode = wantsBackground ? 'new' : false;
+  console.log('headlessモード:', headlessMode === false ? '可視(visible)' : 'バックグラウンド(headless)');
   
   const browser = await puppeteer.launch({
-    headless: false, // ブラウザウィンドウを表示
+    headless: headlessMode,
     defaultViewport: null, // ウインドウサイズをargsで指定するためnullに
     args: [
       '--window-size=1280,900',

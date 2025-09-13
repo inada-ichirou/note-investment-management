@@ -57,13 +57,18 @@ function handleTimeout() {
   console.log(`【タイムアウト設定】${TIMEOUT_MS / 1000}秒後に自動終了します`);
 
   logTime('Puppeteer起動オプションを取得します');
+  // 実行引数からheadlessを決定（--bg があればheadless、それ以外は可視）
+  const argv = process.argv.slice(2);
+  const wantsBackground = argv.includes('--bg');
   const isCI = process.env.CI === 'true';
+  const headlessMode = wantsBackground ? 'new' : (isCI ? 'old' : false);
   console.log('process.env.CIの値:', process.env.CI);
   console.log('isCI:', isCI);
+  console.log('headlessモード:', headlessMode === false ? '可視(visible)' : 'バックグラウンド(headless)');
   logTime('puppeteer.launch 開始');
   const chromePath = await getChromePath();
   const browser = await puppeteer.launch({
-    headless: isCI ? 'old' : false,
+    headless: headlessMode,
     executablePath: chromePath,
     args: [
       '--no-sandbox',

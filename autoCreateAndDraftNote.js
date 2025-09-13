@@ -748,14 +748,20 @@ export default async function main() {
     const isFly = !!process.env.FLY_APP_NAME;
     const isCI = process.env.CI === 'true';
     
+    // 実行引数からheadlessを決定（--bg があればheadless、それ以外は可視）
+    const argv = process.argv.slice(2);
+    const wantsBackground = argv.includes('--bg');
+    const headlessMode = wantsBackground ? 'new' : false;
+    
     console.log('process.env.CIの値:', process.env.CI);
     console.log('isCI:', isCI);
     console.log('isFly:', isFly);
     console.log('isVercel:', isVercel);
     console.log('isPipedream:', isPipedream);
+    console.log('headlessモード:', headlessMode === false ? '可視(visible)' : 'バックグラウンド(headless)');
     
     let launchOptions = {
-      headless: isFly || isCI || isVercel || isPipedream ? true : false,
+      headless: wantsBackground ? 'new' : (isFly || isCI || isVercel || isPipedream ? true : false),
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -799,7 +805,7 @@ export default async function main() {
       
       // Vercel環境では明示的にChromeパスを指定
       launchOptions = {
-        headless: true,
+        headless: wantsBackground ? 'new' : true,
         executablePath: '/vercel/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome',
         args: [
           '--no-sandbox',

@@ -31,13 +31,17 @@ async function getChromePath() {
 
 (async () => {
   console.log('Puppeteer起動オプションを取得します');
-  // CI環境（GitHub Actions等）ではheadless:'old'、ローカルではheadless:false
+  // 実行引数からheadlessを決定（--bg があればheadless、それ以外は可視）
+  const argv = process.argv.slice(2);
+  const wantsBackground = argv.includes('--bg');
   const isCI = process.env.CI === 'true';
+  const headlessMode = wantsBackground ? 'new' : (isCI ? 'new' : false);
   console.log('process.env.CIの値:', process.env.CI);
   console.log('isCI:', isCI);
+  console.log('headlessモード:', headlessMode === false ? '可視(visible)' : 'バックグラウンド(headless)');
   const chromePath = await getChromePath();
   const browser = await puppeteer.launch({
-    headless: isCI ? 'new' : false, // 'old'から'new'に変更
+    headless: headlessMode,
     executablePath: chromePath,
     defaultViewport: null, // ウインドウサイズをargsで指定するためnullに
     args: [
