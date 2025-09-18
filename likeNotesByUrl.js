@@ -1,12 +1,17 @@
 import dotenv from 'dotenv';
 import puppeteer from 'puppeteer';
+import { getRandomUserAgent } from './userAgents.js';
 
 dotenv.config();
 
 (async () => {
-  // コマンドライン引数からURLを取得（--bgオプションを除外）
-  const argv = process.argv.slice(2);
-  const targetUrl = argv.find(arg => !arg.startsWith('--'));
+  // コマンドライン引数を解析
+  const args = process.argv.slice(2);
+  const wantsBackground = args.includes('--bg');
+  
+  // --bgオプションを除いた引数からURLを取得
+  const urlArgs = args.filter(arg => arg !== '--bg');
+  const targetUrl = urlArgs[0];
   
   // デフォルトURL（引数がない場合）
   const defaultUrl = 'https://note.com/enginner_skill';
@@ -22,29 +27,141 @@ dotenv.config();
   if (!urlToUse.startsWith('https://note.com/')) {
     console.error('エラー: 有効なnote.comのURLを指定してください');
     console.error('例: node likeNotesByUrl.js https://note.com/enginner_skill');
+    console.error('例: node likeNotesByUrl.js --bg https://note.com/enginner_skill');
     process.exit(1);
   }
 
   console.log('Puppeteer起動オプションを取得します');
   // 実行引数からheadlessを決定（--bg があればheadless、それ以外は可視）
-  const wantsBackground = argv.includes('--bg');
   const isCI = process.env.CI === 'true';
   const headlessMode = wantsBackground ? 'new' : false;
   console.log('headlessモード:', headlessMode === false ? '可視(visible)' : 'バックグラウンド(headless)');
+  console.log('process.env.CIの値:', process.env.CI);
+  console.log('isCI:', isCI);
+  
+  // ランダムなUser-Agentを取得
+  const randomUserAgent = getRandomUserAgent();
+  console.log('使用するUser-Agent:', randomUserAgent);
+  
+  // ランダムなビューポートサイズを生成
+  const viewportSizes = [
+    { width: 1366, height: 768 },
+    { width: 1920, height: 1080 },
+    { width: 1440, height: 900 },
+    { width: 1536, height: 864 },
+    { width: 1280, height: 720 }
+  ];
+  const randomViewport = viewportSizes[Math.floor(Math.random() * viewportSizes.length)];
+  console.log('使用するビューポートサイズ:', randomViewport);
   
   const browser = await puppeteer.launch({
     headless: headlessMode,
     defaultViewport: null, // ウインドウサイズをargsで指定するためnullに
     args: [
-      '--window-size=1280,900',
+      `--window-size=${randomViewport.width},${randomViewport.height}`,
+      '--incognito', // シークレットモード（プライベートモード）を強制
+      '--no-first-run', // 初回実行時のセットアップをスキップ
+      '--no-default-browser-check', // デフォルトブラウザチェックをスキップ
+      '--disable-default-apps', // デフォルトアプリを無効化
+      '--disable-background-mode', // バックグラウンドモードを無効化
+      '--disable-background-networking', // バックグラウンドネットワーキングを無効化
+      '--disable-background-timer-throttling', // バックグラウンドタイマー調整を無効化
+      '--disable-backgrounding-occluded-windows', // 隠れたウィンドウのバックグラウンド化を無効化
+      '--disable-renderer-backgrounding', // レンダラーのバックグラウンド化を無効化
+      '--disable-features=TranslateUI', // 翻訳UIを無効化
+      '--disable-ipc-flooding-protection', // IPCフラッディング保護を無効化
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-gpu',
-      '--disable-dev-shm-usage'
+      '--disable-dev-shm-usage',
+      '--disable-web-security',
+      '--disable-features=VizDisplayCompositor',
+      '--disable-blink-features=AutomationControlled',
+      '--disable-extensions',
+      '--disable-plugins',
+      '--disable-images', // 画像読み込みを無効化して高速化
+      '--disable-javascript-harmony-shipping',
+      `--user-agent=${randomUserAgent}`
     ]
   });
   
-  const page = await browser.newPage();
+  // ブラウザのページ数を確認
+  const pages = await browser.pages();
+  console.log('【ブラウザ起動時のページ数】:', pages.length);
+  
+  // 既存のページがある場合はそれを使用、なければ新規作成
+  let page;
+  if (pages.length > 0) {
+    page = pages[0]; // 最初のページを使用
+    console.log('既存のページを使用します');
+  } else {
+    page = await browser.newPage();
+    console.log('新しいページを作成しました');
+  }
+  
+  // プライベートモードかどうかを検証
+  console.log('【プライベートモード検証】');
+  console.log('ブラウザコンテキストID:', page.browserContext().id);
+  
+  // ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+  // // isIncognitoプロパティの存在確認
+  // const browserContext = page.browserContext();
+  // const isIncognito = browserContext.isIncognito !== undefined ? browserContext.isIncognito : 'プロパティなし';
+  // console.log('browserContext:', browserContext);
+  // console.log('browserContext.isIncognito:', isIncognito);
+  // console.log('ブラウザコンテキストタイプ:', browserContext.isIncognito ? 'プライベート' : '通常');
+  
+  // // ブラウザコンテキストの詳細情報
+  // console.log('ブラウザコンテキスト詳細:', {
+  //   id: browserContext.id,
+  //   hasIsIncognito: 'isIncognito' in browserContext,
+  //   isIncognitoValue: browserContext.isIncognito
+  // });
+  
+  // // browserContextのプロパティ一覧を取得
+  // console.log('【browserContextプロパティ一覧】');
+  // const contextProps = Object.getOwnPropertyNames(browserContext);
+  // console.log('プロパティ名:', contextProps);
+  
+  // // プロトタイプのプロパティも取得
+  // const prototypeProps = Object.getOwnPropertyNames(Object.getPrototypeOf(browserContext));
+  // console.log('プロトタイププロパティ:', prototypeProps);
+  
+  // // 利用可能なメソッドを確認
+  // const methods = contextProps.filter(prop => typeof browserContext[prop] === 'function');
+  // console.log('利用可能なメソッド:', methods);
+  
+  // // プライベートモードの別の確認方法
+  // console.log('【プライベートモード別確認方法】');
+  
+  // // 1. ブラウザの起動引数を確認
+  // const browserArgs = await browser.process()?.spawnargs || [];
+  // const hasIncognito = browserArgs.includes('--incognito');
+  // console.log('--incognitoオプション:', hasIncognito ? 'あり' : 'なし');
+  
+  // // 2. ページのURLで確認（about:blank以外ならプライベートモードの可能性）
+  // const currentUrl = page.url();
+  // console.log('現在のURL:', currentUrl);
+  
+  // // 3. ブラウザのバージョン情報
+  // const version = await browser.version();
+  // console.log('ブラウザバージョン:', version);
+  // ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+  
+  // ページの詳細情報を取得
+  const pageInfo = await page.evaluate(() => {
+    return {
+      userAgent: navigator.userAgent,
+      cookieEnabled: navigator.cookieEnabled,
+      onLine: navigator.onLine,
+      language: navigator.language,
+      platform: navigator.platform,
+      webdriver: navigator.webdriver,
+      chrome: window.chrome ? '存在' : 'なし'
+    };
+  });
+  
+  console.log('ページ情報:', pageInfo);
 
   try {
     console.log('対象ページへ遷移します:', urlToUse);
@@ -355,3 +472,4 @@ dotenv.config();
     console.log('ブラウザを閉じました');
   }
 })();
+
